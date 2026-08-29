@@ -5,18 +5,16 @@
 //    prints them (decoding + gating run for real).
 // Run: pnpm test:eas
 import { strict as assert } from 'node:assert'
-import { existsSync, readFileSync } from 'node:fs'
-import { join, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import type { Address } from 'viem'
 import { resolveEnsAddress } from '../src/lib/ens'
 import {
+  EFP_API,
   RECOMMENDATION_SCHEMA,
   computeSchemaUid,
   efpFollowStates,
   fetchRecommendations,
-  type RecommendationsConfig,
 } from '../src/lib/eas'
+import { loadConfig } from './load-config'
 
 // Pure regression check: UID derivation must match how the SchemaRegistry
 // derives UIDs (verified against a real registered schema on Base).
@@ -27,18 +25,7 @@ assert.equal(
 )
 console.log(`recommendation schema UID: ${computeSchemaUid(RECOMMENDATION_SCHEMA)}`)
 
-const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src')
-const readJson = (f: string) =>
-  JSON.parse(readFileSync(join(SRC, f), 'utf8')) as {
-    ensName?: string
-    rpcUrls?: string[]
-    recommendations?: RecommendationsConfig
-  }
-const cfg = {
-  ...readJson('config.json'),
-  ...(existsSync(join(SRC, 'config.custom.json')) ? readJson('config.custom.json') : {}),
-}
-
+const cfg = loadConfig()
 const name = cfg.ensName!
 const receiver = await resolveEnsAddress(name, cfg.rpcUrls)
 assert.ok(receiver, `${name} resolves to an address`)
@@ -46,9 +33,9 @@ console.log(`${name} -> ${receiver}`)
 
 // EFP self-consistency: someone the receiver follows must gate as public,
 // and a throwaway address must not.
-const following = (await (
-  await fetch(`https://api.ethfollow.xyz/api/v1/users/${receiver}/following?limit=1`)
-).json()) as { following?: { address: Address }[] }
+const following = (await (await fetch(`${EFP_API}/users/${receiver}/following?limit=1`)).json()) as {
+  following?: { address: Address }[]
+}
 const followed = following.following?.[0]?.address
 if (followed) {
   const states = await efpFollowStates(receiver, [followed, '0x0000000000000000000000000000000000000001'])
@@ -59,7 +46,7 @@ if (followed) {
 }
 
 if (cfg.recommendations?.schemaUid) {
-  const recs = await fetchRecommendations(cfg.recommendations, receiver)
+  const recs = await fetchRecommendations(cfg.recommendations, receiver, cfg.rpcUrls)
   console.log(JSON.stringify(recs, null, 2))
   for (const r of recs) {
     assert.ok(r.uid && r.attester && r.recommendation)

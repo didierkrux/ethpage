@@ -3,21 +3,14 @@
 // redeploy). Run: PINATA_JWT=... pnpm deploy:pin
 import 'dotenv/config'
 import { readdir, readFile } from 'node:fs/promises'
-import { existsSync, readFileSync } from 'node:fs'
 import { join, relative, sep, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { loadConfig } from './load-config'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const DIST = join(ROOT, 'dist')
 
-// Same merge as src/config.ts: generic template overridden by the optional
-// gitignored personal config.
-const SRC = join(ROOT, 'src')
-const readJson = (f: string) => JSON.parse(readFileSync(join(SRC, f), 'utf8')) as { ensName?: string }
-const { ensName } = {
-  ...readJson('config.json'),
-  ...(existsSync(join(SRC, 'config.custom.json')) ? readJson('config.custom.json') : {}),
-}
+const { ensName } = loadConfig()
 if (!ensName) {
   console.error('ensName missing from src/config.json / src/config.custom.json')
   process.exit(1)

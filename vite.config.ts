@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs'
+import { readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig, type Plugin } from 'vite'
@@ -6,24 +6,13 @@ import react from '@vitejs/plugin-react'
 import { createPublicClient, fallback, http } from 'viem'
 import { mainnet } from 'viem/chains'
 import { normalize } from 'viem/ens'
-
-interface BuildConfig {
-  ensName: string
-  og?: { title?: string; description?: string }
-  rpcUrls?: string[]
-}
+import { loadConfig } from './scripts/load-config'
 
 const ROOT = dirname(fileURLToPath(import.meta.url))
 const { version } = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as { version: string }
 
-// Same merge as src/config.ts: the committed generic template overridden by
-// the optional gitignored personal config (fs here — this file runs in node).
-const SRC = join(ROOT, 'src')
-const readJson = (f: string) => JSON.parse(readFileSync(join(SRC, f), 'utf8')) as Partial<BuildConfig>
-const config = {
-  ...readJson('config.json'),
-  ...(existsSync(join(SRC, 'config.custom.json')) ? readJson('config.custom.json') : {}),
-} as BuildConfig
+const config = loadConfig()
+if (!config.ensName) throw new Error('ensName missing from src/config.json / src/config.custom.json')
 
 const ENS_NAME = config.ensName
 // ENS metadata service serves the name's avatar image: share previews and the

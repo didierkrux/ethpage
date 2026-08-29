@@ -10,6 +10,7 @@ import {
   type Hex,
 } from 'viem'
 import { arbitrum, base, mainnet, optimism, sepolia } from 'viem/chains'
+import { lookupEnsName } from './ens'
 import { activeProvider, connectWallet } from './wallets'
 
 // Recommendations are EAS attestations (attest.org): schema
@@ -93,20 +94,30 @@ export function computeSchemaUid(schema: string, resolver: Address = zeroAddress
   return keccak256(encodePacked(['string', 'address', 'bool'], [schema, resolver, revocable]))
 }
 
-// Registered = the chain's easscan indexer knows the UID.
-export async function isSchemaRegistered(chainName: string, uid: Hex): Promise<boolean> {
-  const { easscan } = chainInfo({ chain: chainName, schemaUid: uid })
+// Single door to the easscan GraphQL indexer. A 200 with an `errors` payload
+// (rate limit, transient resolver failure) throws instead of masquerading as
+// an empty result — callers must not mistake an indexer hiccup for "absent".
+async function easscanQuery<T>(easscan: string, query: string, variables: unknown): Promise<T> {
   const res = await fetch(`${easscan}/graphql`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      query: `query Schema($where: SchemaWhereUniqueInput!) { schema(where: $where) { id } }`,
-      variables: { where: { id: uid } },
-    }),
+    body: JSON.stringify({ query, variables }),
   })
   if (!res.ok) throw new Error(`easscan responded ${res.status}`)
-  const json = (await res.json()) as { data?: { schema?: { id: string } | null } }
-  return !!json.data?.schema?.id
+  const json = (await res.json()) as { data?: T; errors?: unknown[] }
+  if (json.errors?.length || !json.data) throw new Error('easscan returned an error payload')
+  return json.data
+}
+
+// Registered = the chain's easscan indexer knows the UID.
+export async function isSchemaRegistered(chainName: string, uid: Hex): Promise<boolean> {
+  const { easscan } = chainInfo({ chain: chainName, schemaUid: uid })
+  const data = await easscanQuery<{ schema?: { id: string } | null }>(
+    easscan,
+    `query Schema($where: SchemaWhereUniqueInput!) { schema(where: $where) { id } }`,
+    { where: { id: uid } }
+  )
+  return !!data.schema?.id
 }
 
 const REGISTRY_ABI = [
@@ -173,17 +184,22 @@ function decodeRow(row: AttestationRow): Omit<Recommendation, 'isPublic' | 'atte
 // the receiver's primary list id, then one batch for every attester. Errors
 // and accounts without an EFP list count as not-followed (hidden), the safe
 // default.
-const EFP_API = 'https://api.ethfollow.xyz/api/v1'
+export const EFP_API = 'https://api.ethfollow.xyz/api/v1'
 
-export async function efpFollowStates(receiver: Address, addresses: Address[]): Promise<boolean[]> {
-  if (addresses.length === 0) return []
+async function fetchPrimaryList(receiver: Address): Promise<string | null> {
   try {
     const details = (await (await fetch(`${EFP_API}/users/${receiver}/details`)).json()) as {
       primary_list?: string | null
     }
-    const list = details.primary_list
-    if (!list) return addresses.map(() => false)
+    return details.primary_list ?? null
+  } catch {
+    return null
+  }
+}
 
+async function batchFollowStates(list: string | null, addresses: Address[]): Promise<boolean[]> {
+  if (!list || addresses.length === 0) return addresses.map(() => false)
+  try {
     const res = await fetch(`${EFP_API}/lists/${list}/buttonStateBatch`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -203,37 +219,62 @@ export async function efpFollowStates(receiver: Address, addresses: Address[]): 
   }
 }
 
-export async function fetchRecommendations(cfg: RecommendationsConfig, recipient: Address): Promise<Recommendation[]> {
+export async function efpFollowStates(receiver: Address, addresses: Address[]): Promise<boolean[]> {
+  return batchFollowStates(await fetchPrimaryList(receiver), addresses)
+}
+
+export async function fetchRecommendations(
+  cfg: RecommendationsConfig,
+  recipient: Address,
+  rpcUrls?: string[]
+): Promise<Recommendation[]> {
   const { easscan } = chainInfo(cfg)
-  const res = await fetch(`${easscan}/graphql`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      query: `query Recommendations($where: AttestationWhereInput!, $take: Int!) {
+  // The EFP list lookup only needs the recipient, so it runs alongside the
+  // attestation query; the follow states and ENS reverse lookups (deduped
+  // per attester) then run together. Two network rounds instead of four.
+  const [data, list] = await Promise.all([
+    easscanQuery<{ attestations?: AttestationRow[] }>(
+      easscan,
+      `query Recommendations($where: AttestationWhereInput!, $take: Int!) {
         attestations(where: $where, orderBy: { timeCreated: desc }, take: $take) {
           id attester timeCreated decodedDataJson
         }
       }`,
-      variables: {
+      {
         take: MAX_RECOMMENDATIONS,
         where: {
           schemaId: { equals: cfg.schemaUid },
           recipient: { equals: recipient },
           revoked: { equals: false },
+          // EAS treats attestations past their expirationTime as invalid;
+          // 0 = never expires (the only value this page's own form writes).
+          OR: [{ expirationTime: { equals: 0 } }, { expirationTime: { gt: Math.floor(Date.now() / 1000) } }],
         },
-      },
-    }),
-  })
-  if (!res.ok) throw new Error(`easscan responded ${res.status}`)
-  const json = (await res.json()) as { data?: { attestations?: AttestationRow[] }; errors?: unknown }
-  if (!json.data?.attestations) throw new Error('easscan returned unexpected shape')
+      }
+    ),
+    fetchPrimaryList(recipient),
+  ])
+  if (!data.attestations) throw new Error('easscan returned unexpected shape')
 
-  const decoded = json.data.attestations.map(decodeRow).filter(r => r !== null)
-  const followed = await efpFollowStates(
-    recipient,
-    decoded.map(r => r.attester)
-  )
-  return decoded.map((r, i) => ({ ...r, attesterName: null, isPublic: followed[i] }))
+  const decoded = data.attestations.map(decodeRow).filter(r => r !== null)
+  const attesters = [...new Set(decoded.map(r => r.attester.toLowerCase()))] as Address[]
+  const [followed, names] = await Promise.all([
+    batchFollowStates(list, attesters),
+    Promise.all(attesters.map(a => lookupEnsName(a, rpcUrls))),
+  ])
+  const byAttester = new Map(attesters.map((a, i) => [a, { isPublic: followed[i], name: names[i] }]))
+  return decoded.map(r => {
+    const info = byAttester.get(r.attester.toLowerCase() as Address)
+    return { ...r, attesterName: info?.name ?? null, isPublic: info?.isPublic ?? false }
+  })
+}
+
+// Walks the cause chain for an EIP-1193 error code (viem wraps them).
+function errorCode(e: unknown): number | undefined {
+  for (let err = e as { code?: unknown; cause?: unknown } | undefined; err; err = err.cause as typeof err) {
+    if (typeof err.code === 'number') return err.code
+  }
+  return undefined
 }
 
 // Wallet plumbing (EIP-6963 discovery, connect, auto-reconnect) lives in
@@ -245,8 +286,10 @@ async function connectedWalletClient(chain: Chain) {
   const wallet = createWalletClient({ chain, transport: custom(provider) })
   try {
     await wallet.switchChain({ id: chain.id })
-  } catch {
-    // Wallet doesn't know the chain yet (EIP-3085), or refused: add + retry.
+  } catch (e) {
+    // Only "unrecognized chain" (EIP-3085, code 4902) warrants add + retry;
+    // anything else (e.g. the user rejecting the switch, 4001) propagates.
+    if (errorCode(e) !== 4902) throw e
     await wallet.addChain({ chain })
     await wallet.switchChain({ id: chain.id })
   }

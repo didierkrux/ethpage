@@ -8,14 +8,14 @@ import {
   discoveredWallets,
   getConnectedAccount,
   onAccountsChanged,
+  onWalletChange,
   selectWallet,
   type DiscoveredWallet,
 } from '../lib/wallets'
+import type { Loadable } from '../types'
 
 // Only rendered when the config declares it (App gates on schemaUid).
 const cfg = CONFIG.recommendations!
-
-type Loadable<T> = { status: 'loading' } | { status: 'error' } | { status: 'ready'; data: T }
 
 function shortAddress(addr: string): string {
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`
@@ -44,9 +44,8 @@ export function Recommendations() {
       try {
         const receiver = await resolveEnsAddress(ENS_NAME, CONFIG.rpcUrls)
         if (!receiver) throw new Error('name has no address')
-        const recs = await fetchRecommendations(cfg, receiver)
-        const names = await Promise.all(recs.map(r => lookupEnsName(r.attester, CONFIG.rpcUrls)))
-        setState({ status: 'ready', data: { receiver, recs: recs.map((r, i) => ({ ...r, attesterName: names[i] })) } })
+        const recs = await fetchRecommendations(cfg, receiver, CONFIG.rpcUrls)
+        setState({ status: 'ready', data: { receiver, recs } })
       } catch {
         // The section hides on indexer/RPC failure rather than breaking the page.
         setState({ status: 'error' })
@@ -54,10 +53,23 @@ export function Recommendations() {
     })()
   }, [])
 
-  // Auto-reconnect (silent) + follow wallet account switches.
+  // Auto-reconnect (silent) + follow wallet account switches. onWalletChange
+  // re-binds everything when the effective provider changes (a pick in the
+  // EIP-6963 picker, or the remembered wallet announcing late), so account
+  // events never keep flowing from a stale provider.
   useEffect(() => {
-    getConnectedAccount().then(a => a && setViewer(a))
-    return onAccountsChanged(setViewer)
+    let unsubAccounts = onAccountsChanged(setViewer)
+    const sync = () => getConnectedAccount().then(a => a && setViewer(a))
+    const unsubWallet = onWalletChange(() => {
+      unsubAccounts()
+      unsubAccounts = onAccountsChanged(setViewer)
+      sync()
+    })
+    sync()
+    return () => {
+      unsubAccounts()
+      unsubWallet()
+    }
   }, [])
 
   useEffect(() => {
@@ -224,6 +236,7 @@ export function Recommendations() {
             value={relationship}
             onChange={e => setRelationship(e.target.value)}
             placeholder="How do you know them? (optional)"
+            aria-label="How do you know them"
             maxLength={80}
             className="w-full rounded-lg border border-neutral-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
           />
@@ -231,6 +244,7 @@ export function Recommendations() {
             value={text}
             onChange={e => setText(e.target.value)}
             placeholder={`Your recommendation for ${ENS_NAME}…`}
+            aria-label={`Your recommendation for ${ENS_NAME}`}
             required
             rows={3}
             maxLength={1000}

@@ -13,7 +13,7 @@ time. No backend, no analytics, no API keys.
 
 ## Fork it
 
-1. Fork this repo (or click "Fork this page" on a deployed one).
+1. Fork this repo (or tap "Create your own ENS page" on a deployed one).
 2. Edit `src/config.json`:
 
    ```json

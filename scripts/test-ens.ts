@@ -3,21 +3,10 @@
 // Run: pnpm test:ens          (uses the configured ensName)
 //      pnpm test:ens some.eth (any other name)
 import { strict as assert } from 'node:assert'
-import { existsSync, readFileSync } from 'node:fs'
-import { join, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { fetchEnsProfile } from '../src/lib/ens'
+import { loadConfig } from './load-config'
 
-// src/config.ts is Vite-only (import.meta.glob), so merge the config files
-// with fs here, same semantics: template overridden by the optional
-// gitignored personal config.
-const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src')
-const readJson = (f: string) =>
-  JSON.parse(readFileSync(join(SRC, f), 'utf8')) as { ensName?: string; rpcUrls?: string[] }
-const cfg = {
-  ...readJson('config.json'),
-  ...(existsSync(join(SRC, 'config.custom.json')) ? readJson('config.custom.json') : {}),
-}
+const cfg = loadConfig()
 
 const name = process.argv[2] ?? cfg.ensName!
 const profile = await fetchEnsProfile(name, cfg.rpcUrls)

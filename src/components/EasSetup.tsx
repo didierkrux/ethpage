@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { Hex } from 'viem'
 import {
   EAS_CHAIN_NAMES,
@@ -30,33 +30,59 @@ export function EasSetup() {
   const { chain, easscan } = chainInfo({ chain: chainName, schemaUid: uid })
   const snippet = `"recommendations": { "chain": "${chainName}", "schemaUid": "${uid}" }`
 
+  // Every chain switch bumps the run id; async results from a previous chain
+  // (a slow check, or the post-register indexer poll) are discarded instead
+  // of stamping the wrong chain "registered".
+  const runRef = useRef(0)
+
   const check = useCallback(() => {
+    const run = ++runRef.current
     setStatus({ kind: 'checking' })
     setTx(null)
     isSchemaRegistered(chainName, uid)
-      .then(found => setStatus({ kind: found ? 'registered' : 'unregistered' }))
-      .catch(e => setStatus({ kind: 'error', message: (e as Error).message }))
+      .then(found => runRef.current === run && setStatus({ kind: found ? 'registered' : 'unregistered' }))
+      .catch(e => runRef.current === run && setStatus({ kind: 'error', message: (e as Error).message }))
   }, [chainName, uid])
 
   useEffect(check, [check])
 
   const register = () => {
+    const run = runRef.current
     setSending(true)
     registerRecommendationSchema(chainName)
       .then(hash => {
+        if (runRef.current !== run) return
         setTx(hash)
-        // The indexer usually catches up within seconds; poll a few times.
+        // The indexer usually catches up within seconds; poll for ~1 minute,
+        // then say so instead of hanging forever.
         const poll = (attempt: number) => {
+          if (runRef.current !== run) return
           isSchemaRegistered(chainName, uid)
             .then(found => {
+              if (runRef.current !== run) return
               if (found) setStatus({ kind: 'registered' })
               else if (attempt < 15) setTimeout(() => poll(attempt + 1), 4000)
+              else
+                setStatus({
+                  kind: 'error',
+                  message:
+                    'Transaction sent, but the indexer has not caught up after a minute — reload this page shortly to confirm before retrying.',
+                })
             })
-            .catch(() => attempt < 15 && setTimeout(() => poll(attempt + 1), 4000))
+            .catch(() => {
+              if (runRef.current !== run) return
+              if (attempt < 15) setTimeout(() => poll(attempt + 1), 4000)
+              else
+                setStatus({
+                  kind: 'error',
+                  message:
+                    'Transaction sent, but the indexer has not caught up after a minute — reload this page shortly to confirm before retrying.',
+                })
+            })
         }
         poll(0)
       })
-      .catch(e => setStatus({ kind: 'error', message: (e as Error).message.split('\n')[0] }))
+      .catch(e => runRef.current === run && setStatus({ kind: 'error', message: (e as Error).message.split('\n')[0] }))
       .finally(() => setSending(false))
   }
 

@@ -6,8 +6,7 @@ import { Profile, ProfileSkeleton } from './components/Profile'
 import { Links } from './components/Links'
 import { Recommendations } from './components/Recommendations'
 import { QrBadge } from './components/QrBadge'
-
-type Loadable<T> = { status: 'loading' } | { status: 'error' } | { status: 'ready'; data: T }
+import type { Loadable } from './types'
 
 export default function App() {
   const [profile, setProfile] = useState<Loadable<EnsProfile>>({ status: 'loading' })

@@ -28,10 +28,37 @@ const announced: DiscoveredWallet[] = []
 let active: EIP1193Provider | null = null
 const STORAGE_KEY = 'ens-page:wallet-rdns'
 
+// Fired when the effective provider may have changed: an explicit pick, or
+// the remembered wallet announcing itself after page load (extensions inject
+// asynchronously). Consumers re-subscribe their event listeners and re-read
+// the connected account, so nothing stays bound to a stale provider.
+const changeListeners = new Set<() => void>()
+
+function notifyChange() {
+  for (const cb of [...changeListeners]) cb()
+}
+
+export function onWalletChange(cb: () => void): () => void {
+  changeListeners.add(cb)
+  return () => changeListeners.delete(cb)
+}
+
+function storedRdns(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEY)
+  } catch {
+    return null
+  }
+}
+
 if (typeof window !== 'undefined') {
   window.addEventListener('eip6963:announceProvider', e => {
     const { info, provider } = (e as AnnounceEvent).detail
-    if (!announced.some(w => w.rdns === info.rdns)) announced.push({ ...info, provider })
+    if (!announced.some(w => w.rdns === info.rdns)) {
+      announced.push({ ...info, provider })
+      // The wallet the user chose last time just showed up: switch to it.
+      if (!active && info.rdns === storedRdns()) notifyChange()
+    }
   })
   window.dispatchEvent(new Event('eip6963:requestProvider'))
 }
@@ -46,23 +73,20 @@ export function discoveredWallets(): DiscoveredWallet[] {
 }
 
 export function selectWallet(wallet: DiscoveredWallet): void {
+  const changed = active !== wallet.provider
   active = wallet.provider
   try {
     localStorage.setItem(STORAGE_KEY, wallet.rdns)
   } catch {
     /* storage unavailable (private mode) — selection just won't persist */
   }
+  if (changed) notifyChange()
 }
 
 export function activeProvider(): EIP1193Provider | null {
   if (active) return active
-  try {
-    const rdns = localStorage.getItem(STORAGE_KEY)
-    const remembered = announced.find(w => w.rdns === rdns)
-    if (remembered) return (active = remembered.provider)
-  } catch {
-    /* storage unavailable */
-  }
+  const remembered = announced.find(w => w.rdns === storedRdns())
+  if (remembered) return (active = remembered.provider)
   if (typeof window === 'undefined') return null
   return window.ethereum ?? announced[0]?.provider ?? null
 }
