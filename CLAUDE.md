@@ -1,0 +1,44 @@
+# ens-page
+
+Static Vite + React SPA: an ENS-driven profile/links page pinned to IPFS,
+served at `https://<ensName>.eth.limo/`. Designed to be forked; this checkout
+deploys didierkrux.eth via the gitignored `src/config.custom.json`.
+
+## Commands
+
+- `pnpm dev` / `pnpm build` / `pnpm preview` / `pnpm type-check`
+- `pnpm test:socials` — pure assertions (socials map + favicon helper)
+- `pnpm test:ens [name.eth]` — mainnet integration test (network-dependent)
+- `pnpm deploy:pin` — needs `PINATA_JWT`; deploying is the owner's call, never
+  run it unprompted
+
+## Architecture
+
+- Baked data comes from `src/config.json` (committed generic template)
+  shallow-merged with optional `src/config.custom.json` (gitignored personal
+  config). Editing either requires rebuild + re-pin. `src/config.ts` does the
+  merge via `import.meta.glob` and is **Vite-only** — node-side consumers
+  (`vite.config.ts`, `scripts/*.ts`) fs-read and merge the two files.
+- Everything else (avatar, header, bio, url, socials) resolves live from ENS
+  records in the browser: `src/lib/ens.ts`, keyless public RPCs with viem
+  `fallback` + multicall batching, `rpcUrls` passed in by callers. No API
+  keys anywhere.
+- Avatar/header images render via the ENS metadata service
+  (`metadata.ens.domains`), never the raw record URL — public IPFS gateways
+  (ipfs.io) 403 hotlinked browser requests behind bot protection.
+- `src/lib/socials.ts` maps ENSIP-5 keys → URLs; social icons are static
+  imports from `@icons-pack/react-simple-icons` in `Profile.tsx`.
+- Link button icons: `image` > `emoji` > DuckDuckGo favicon fallback
+  (`src/lib/favicon.ts`), hidden on error.
+- `vite.config.ts` bakes `<title>`, OG tags, and favicon (metadata-service
+  avatar URL) into `index.html` at build; `base: './'` keeps the bundle
+  gateway-path-safe. `?name=x.eth` previews any name at runtime.
+
+## Constraints
+
+- Keep it minimal and forkable: no backend, no analytics, no env vars beyond
+  `PINATA_JWT`, no new config surface without need.
+- Personal values (didierkrux.eth, his links/colors) live ONLY in the
+  gitignored `src/config.custom.json` — committed files and docs stay generic.
+- Spec + decision log: `docs/superpowers/specs/2026-08-29-ens-page-design.md`
+  (local working docs, gitignored — absent in fresh clones).

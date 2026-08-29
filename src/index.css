@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Neutral default (monochrome page). Forks set "accent" in src/config.json;
+     main.tsx overrides this variable at startup when it is set. */
+  --accent: #171717;
+}

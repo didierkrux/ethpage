@@ -1,0 +1,13 @@
+node_modules
+dist
+.env
+.env.*
+!.env.example
+.DS_Store
+
+# Personal deployment config (src/config.json stays the generic template).
+# Remove this line if you prefer to commit yours.
+src/config.custom.json
+
+# Local working docs (spec + implementation plan)
+docs/superpowers/

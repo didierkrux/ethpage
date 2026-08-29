@@ -1,0 +1,9 @@
+{
+  "ensName": "yourname.eth",
+  "repo": "https://github.com/didierkrux/ens-page",
+  "og": { "title": "", "description": "" },
+  "links": [
+    { "title": "My Website", "url": "https://example.com", "emoji": "🌐" },
+    { "title": "POAP Badges", "url": "https://poap.in/address/yourname.eth" }
+  ]
+}
