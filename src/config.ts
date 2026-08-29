@@ -15,6 +15,8 @@ export interface SiteConfig {
   og?: { title?: string; description?: string }
   rpcUrls?: string[]
   links: LinkItem[]
+  // EAS-backed recommendations section; absent = hidden. See README.
+  recommendations?: { chain?: string; schemaUid: string }
 }
 
 // config.json is the committed generic template; an optional gitignored

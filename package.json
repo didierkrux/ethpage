@@ -10,6 +10,7 @@
     "type-check": "tsc --noEmit",
     "test:socials": "tsx scripts/test-socials.ts",
     "test:ens": "tsx scripts/test-ens.ts",
+    "test:eas": "tsx scripts/test-eas.ts",
     "deploy:pin": "pnpm build && tsx scripts/deploy-pin.ts"
   },
   "dependencies": {

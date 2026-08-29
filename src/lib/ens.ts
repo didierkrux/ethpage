@@ -1,4 +1,4 @@
-import { createPublicClient, fallback, http, type PublicClient } from 'viem'
+import { createPublicClient, fallback, http, type Address, type PublicClient } from 'viem'
 import { mainnet } from 'viem/chains'
 import { normalize } from 'viem/ens'
 import { SOCIAL_KEYS } from './socials'
@@ -31,6 +31,22 @@ function getClient(rpcUrls?: string[]): PublicClient {
     }
   }
   return cached.client
+}
+
+export async function resolveEnsAddress(rawName: string, rpcUrls?: string[]): Promise<Address | null> {
+  try {
+    return await getClient(rpcUrls).getEnsAddress({ name: normalize(rawName) })
+  } catch {
+    return null
+  }
+}
+
+export async function lookupEnsName(address: Address, rpcUrls?: string[]): Promise<string | null> {
+  try {
+    return await getClient(rpcUrls).getEnsName({ address })
+  } catch {
+    return null
+  }
 }
 
 export interface EnsProfile {

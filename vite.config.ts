@@ -13,9 +13,12 @@ interface BuildConfig {
   rpcUrls?: string[]
 }
 
+const ROOT = dirname(fileURLToPath(import.meta.url))
+const { version } = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')) as { version: string }
+
 // Same merge as src/config.ts: the committed generic template overridden by
 // the optional gitignored personal config (fs here — this file runs in node).
-const SRC = join(dirname(fileURLToPath(import.meta.url)), 'src')
+const SRC = join(ROOT, 'src')
 const readJson = (f: string) => JSON.parse(readFileSync(join(SRC, f), 'utf8')) as Partial<BuildConfig>
 const config = {
   ...readJson('config.json'),
@@ -70,7 +73,10 @@ function escapeAttr(s: string): string {
 function ensMeta(): Plugin {
   return {
     name: 'ens-meta',
-    transformIndexHtml: async html => {
+    transformIndexHtml: async (html, ctx) => {
+      // Only the main page gets the ENS title/OG treatment; the setup page
+      // (eas-setup.html) keeps its own static title.
+      if (!ctx.path.endsWith('/index.html') && ctx.path !== '/') return html
       const title = await buildTitle()
       const ogTitle = escapeAttr(config.og?.title?.trim() || title)
       const ogDescription = escapeAttr(config.og?.description?.trim() || `ENS profile for ${ENS_NAME}`)
@@ -110,5 +116,16 @@ function buildStamp(): Plugin {
 // gateway path (/ipfs/<cid>/) as well as the eth.limo root.
 export default defineConfig({
   base: './',
+  // Surfaced in the footer so deployed pages/forks are identifiable.
+  define: { __APP_VERSION__: JSON.stringify(version) },
   plugins: [react(), ensMeta(), buildStamp()],
+  build: {
+    rollupOptions: {
+      input: {
+        main: join(dirname(fileURLToPath(import.meta.url)), 'index.html'),
+        // One-time owner tool: register the recommendations schema.
+        setup: join(dirname(fileURLToPath(import.meta.url)), 'eas-setup.html'),
+      },
+    },
+  },
 })

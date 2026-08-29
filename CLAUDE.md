@@ -9,6 +9,7 @@ deploys didierkrux.eth via the gitignored `src/config.custom.json`.
 - `pnpm dev` / `pnpm build` / `pnpm preview` / `pnpm type-check`
 - `pnpm test:socials` — pure assertions (socials map + favicon helper)
 - `pnpm test:ens [name.eth]` — mainnet integration test (network-dependent)
+- `pnpm test:eas` — EFP gate + EAS recommendations read path (network)
 - `pnpm deploy:pin` — needs `PINATA_JWT`; deploying is the owner's call, never
   run it unprompted
 
@@ -33,6 +34,14 @@ deploys didierkrux.eth via the gitignored `src/config.custom.json`.
 - `vite.config.ts` bakes `<title>`, OG tags, and favicon (metadata-service
   avatar URL) into `index.html` at build; `base: './'` keeps the bundle
   gateway-path-safe. `?name=x.eth` previews any name at runtime.
+- Optional Recommendations section (`src/lib/eas.ts`,
+  `components/Recommendations.tsx`): EAS attestations read from the easscan
+  GraphQL indexer, published only when the receiver follows the attester on
+  EFP (`buttonStateBatch`, NOT `followerState` — that one lags fresh
+  follows). Writes are viem-only against the EAS contract; never add the
+  eas-sdk (drags in ethers). Wallet plumbing is `src/lib/wallets.ts`:
+  EIP-6963 discovery + picker, localStorage-remembered choice, silent
+  auto-reconnect; no WalletConnect (needs a cloud project ID = API key).
 
 ## Constraints
 

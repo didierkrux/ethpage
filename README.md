@@ -7,6 +7,10 @@ and social icons resolve **live from your ENS records** — edit them at
 redeploy. Only the link buttons (and share-preview tags) are baked in at build
 time. No backend, no analytics, no API keys.
 
+<p align="center">
+  <a href="https://didierkrux.eth.limo"><img src="docs/screenshot.png" alt="ens-page — didierkrux.eth (owner view, with an EAS recommendation pending EFP approval)" width="480"></a>
+</p>
+
 ## Fork it
 
 1. Fork this repo (or click "Fork this page" on a deployed one).
@@ -27,14 +31,17 @@ time. No backend, no analytics, no API keys.
    | `ensName` | yes | The ENS name whose records drive the page |
    | `links[]` | yes | Link buttons: `title` + `url`, optional `emoji` or `image` |
    | `accent` | no | Accent color (link text/hover), default `#171717` |
-   | `repo` | no | Shows a "Fork this page" footer link; omit to hide it |
+   | `repo` | no | Shows a "Create your own ENS page" footer link to the repo; omit to hide it |
    | `efp` | no | [EFP](https://efp.app) icon in the social row, on by default; `false` hides it |
    | `og` | no | `title`/`description` for share previews, defaults derive from `ensName` |
    | `rpcUrls` | no | Your own Ethereum RPC endpoints; defaults are keyless public ones |
 
    Link button icons resolve as `image` > `emoji` > the site's favicon
    (automatic, via DuckDuckGo's icon service). `image` accepts any URL —
-   e.g. `https://cdn.simpleicons.org/x` for monochrome brand icons. Favicons
+   e.g. `https://cdn.simpleicons.org/x` for monochrome brand icons, or
+   another site's favicon via the same DuckDuckGo service, e.g.
+   `"image": "https://icons.duckduckgo.com/ip3/poap.xyz.ico"` (handy when a
+   link points at a mirror but you want the original brand's icon). Favicons
    and such URLs are fetched by the visitor's browser at load time.
 
    Alternatively, put your config in `src/config.custom.json` (same schema,
@@ -60,6 +67,34 @@ time. No backend, no analytics, no API keys.
 
 Re-run step 5 whenever you change the config. ENS record edits never need it.
 
+## Recommendations (optional)
+
+A web3-native take on LinkedIn recommendations: visitors connect a wallet and
+sign an [EAS](https://attest.org) attestation on Base (schema
+`string relationship,string recommendation`, gas ≈ cents), and the page
+displays them automatically. Moderation is
+[EFP](https://efp.app)-native: a recommendation becomes **publicly visible
+only when you follow its author on EFP** (follow = accept). When you connect
+your own wallet on the page, you see pending ones too, each with a
+follow-to-publish link.
+
+Enable it in the config:
+
+```json
+"recommendations": { "chain": "base", "schemaUid": "0x049a46c11ec9ef3b1fb4b72b5e980b3e49d0eda0e9204dc50b1716e2ec1fc163" }
+```
+
+That UID is the shared recommendation schema, already registered on Base —
+using it means recommendations stay portable across every ens-page.
+
+`chain` is one of `base` (default), `optimism`, `mainnet`, `arbitrum`,
+`sepolia`. **One-click setup:** open `/eas-setup.html` (locally via
+`pnpm dev`, or on the deployed site) — it checks whether the shared schema
+(`string relationship,string recommendation`) is registered on your chain,
+registers it with your wallet if not, and hands you the exact config snippet.
+Reads go through the public easscan GraphQL indexer; writes need a browser
+wallet (in-app wallet browser on mobile).
+
 ## Scripts
 
 | Command | What it does |
@@ -68,4 +103,5 @@ Re-run step 5 whenever you change the config. ENS record edits never need it.
 | `pnpm build` | Type-check + production build to `dist/` |
 | `pnpm test:socials` | Pure checks of the socials/favicon mapping |
 | `pnpm test:ens` | Resolves the configured name over public RPCs (network) |
+| `pnpm test:eas` | Checks the EFP gate + recommendations read path (network) |
 | `pnpm deploy:pin` | Build + pin `dist/` to Pinata + print the CID |
