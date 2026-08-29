@@ -21,7 +21,8 @@ time. No backend, no analytics, no API keys.
      "ensName": "yourname.eth",
      "links": [
        { "title": "My Website", "url": "https://example.com", "emoji": "🌐" },
-       { "title": "POAP Badges", "url": "https://poap.in/address/yourname.eth" }
+       { "title": "My Blog", "url": "https://blog.example.com" },
+       { "title": "POAP Badges", "url": "https://poap.in/address/yourname.eth", "image": "https://icons.duckduckgo.com/ip3/poap.xyz.ico" }
      ]
    }
    ```
