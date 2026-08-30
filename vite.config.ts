@@ -107,7 +107,9 @@ export default defineConfig({
   base: './',
   server: { port: 3000 },
   // Surfaced in the footer so deployed pages/forks are identifiable.
-  define: { __APP_VERSION__: JSON.stringify(version) },
+  // __CONFIG_NAME__ carries the CONFIG=<name> selection into src/config.ts
+  // so the client bundle uses the same override the build was told to use.
+  define: { __APP_VERSION__: JSON.stringify(version), __CONFIG_NAME__: JSON.stringify(process.env.CONFIG ?? '') },
   plugins: [react(), ensMeta(), buildStamp()],
   build: {
     rollupOptions: {

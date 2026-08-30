@@ -1,4 +1,4 @@
-# ens-page
+# ethpage
 
 Static Vite + React SPA: an ENS-driven profile/links page pinned to IPFS,
 served at `https://<ensName>.eth.limo/`. Designed to be forked; this checkout
@@ -16,10 +16,12 @@ deploys the owner's name via a gitignored `src/config.<name>.json` override.
 ## Architecture
 
 - Baked data comes from `src/config.json` (committed generic template)
-  shallow-merged with any `src/config.<name>.json` (gitignored personal
-  config). Editing either requires rebuild + re-pin. `src/config.ts` does the
-  merge via `import.meta.glob` and is **Vite-only** — node-side consumers
-  (`vite.config.ts`, `scripts/*.ts`) fs-read and merge the files.
+  overridden by a `src/config.<name>.json` (gitignored deployment config).
+  With several overrides, `CONFIG=<name>` selects one (dev, build, deploy,
+  tests); the build errors rather than guessing. Editing configs requires
+  rebuild + re-pin. `src/config.ts` resolves this via `import.meta.glob` +
+  the baked `__CONFIG_NAME__` and is **Vite-only** — node-side consumers
+  (`vite.config.ts`, `scripts/*.ts`) go through `scripts/load-config.ts`.
 - Everything else (avatar, header, bio, url, socials) resolves live from ENS
   records in the browser: `src/lib/ens.ts`, keyless public RPCs with viem
   `fallback` + multicall batching, `rpcUrls` passed in by callers. No API
@@ -47,7 +49,8 @@ deploys the owner's name via a gitignored `src/config.<name>.json` override.
 ## Constraints
 
 - Keep it minimal and forkable: no backend, no analytics, no env vars beyond
-  `PINATA_JWT`, no new config surface without need.
+  `PINATA_JWT` and the optional `CONFIG=<name>` deployment selector, no new
+  config surface without need.
 - Personal values (the owner's ENS name, links, colors) live ONLY in a
   gitignored `src/config.<name>.json` override — committed files and docs
   stay generic.

@@ -1,4 +1,4 @@
-# ens-page
+# ethpage
 
 A minimal link-in-bio profile page for your ENS name, served from IPFS at
 `https://yourname.eth.limo/`. Avatar, header image, display name, bio, website
@@ -8,7 +8,7 @@ redeploy. Only the link buttons (and share-preview tags) are baked in at build
 time. No backend, no analytics, no API keys.
 
 <p align="center">
-  <a href="https://didierkrux.eth.limo"><img src="docs/screenshot.png" alt="ens-page: didierkrux.eth (owner view, with an EAS recommendation pending EFP approval)" width="480"></a>
+  <a href="https://didierkrux.eth.limo"><img src="docs/screenshot.png" alt="ethpage: didierkrux.eth (owner view, with an EAS recommendation pending EFP approval)" width="480"></a>
 </p>
 
 ## Fork it
@@ -37,6 +37,7 @@ time. No backend, no analytics, no API keys.
    | `og` | no | `title`/`description` for share previews, defaults derive from `ensName` |
    | `rpcUrls` | no | Your own Ethereum RPC endpoints; defaults are keyless public ones |
    | `walletConnectProjectId` | no | Adds WalletConnect to the wallet picker so phones can sign recommendations; free id from [cloud.reown.com](https://cloud.reown.com) |
+   | `viewer` | no | Viewer mode: with no `?name=` given, show a name input instead of the configured profile (see [ethpage.eth.limo](https://ethpage.eth.limo)) |
 
    Link button icons resolve as `image` > `emoji` > the site's favicon
    (automatic, via DuckDuckGo's icon service). `image` accepts any URL,
@@ -48,7 +49,9 @@ time. No backend, no analytics, no API keys.
 
    Alternatively, put your config in `src/config.<yourname>.json` (same
    schema, gitignored, overrides `config.json` key by key) to keep your repo
-   a clean template for the next person.
+   a clean template for the next person. With several such files (e.g. one
+   per deployment), select one with `CONFIG=<yourname> pnpm dev` or
+   `CONFIG=<yourname> pnpm deploy:pin`; the build refuses to guess.
 
 3. Set your ENS records (all optional, shown when present): `avatar`,
    `header`, `description`, `url`, `name` (display name), and socials
@@ -88,7 +91,7 @@ Enable it in the config:
 ```
 
 That UID is the shared recommendation schema, already registered on Base.
-Using it means recommendations stay portable across every ens-page.
+Using it means recommendations stay portable across every ethpage.
 
 `chain` is one of `base` (default), `optimism`, `mainnet`, `arbitrum`,
 `sepolia`. **One-click setup:** open `/eas-setup.html` (locally via

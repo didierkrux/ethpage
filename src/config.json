@@ -1,6 +1,6 @@
 {
   "ensName": "yourname.eth",
-  "repo": "https://github.com/didierkrux/ens-page",
+  "repo": "https://github.com/didierkrux/ethpage",
   "og": { "title": "", "description": "" },
   "links": [
     { "title": "My Website", "url": "https://example.com", "emoji": "🌐" },

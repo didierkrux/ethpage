@@ -15,7 +15,7 @@ if (!ensName) {
   console.error('ensName missing from src/config.json (or a config.<name>.json override)')
   process.exit(1)
 }
-const PIN_NAME = `ens-page-${ensName}`
+const PIN_NAME = `ethpage-${ensName}`
 
 const jwt = process.env.PINATA_JWT
 if (!jwt) {

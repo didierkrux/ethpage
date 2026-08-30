@@ -1,0 +1,26 @@
+<!doctype html><meta charset="utf-8"><style>
+* { margin: 0; box-sizing: border-box; }
+body { width: 1024px; height: 1024px; overflow: hidden; }
+.tile { width: 1024px; height: 1024px; position: relative; display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(85% 70% at 50% -10%, #4c1d95 0%, #171223 55%, #0a0a0f 100%); }
+.glow { position: absolute; inset: 0;
+  background: radial-gradient(40% 35% at 72% 78%, rgba(217,70,239,.18), transparent 70%),
+              radial-gradient(45% 40% at 25% 70%, rgba(139,92,246,.14), transparent 70%); }
+svg { position: relative; filter: drop-shadow(0 24px 60px rgba(0,0,0,.55)); }
+</style>
+<div class="tile"><div class="glow"></div>
+  <svg width="700" height="640" viewBox="-1 -0.75 33.5 32">
+    <defs>
+      <linearGradient id="top" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#c4b5fd"/><stop offset="1" stop-color="#a78bfa"/>
+      </linearGradient>
+      <linearGradient id="bot" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#8b5cf6"/><stop offset="1" stop-color="#d946ef"/>
+      </linearGradient>
+    </defs>
+    <path fill="url(#top)" d="M0 15.586 9.365 0l9.297 15.586-9.297 5.674z"/>
+    <path fill="url(#bot)" d="M9.365 22.969 0 17.295l9.365 13.193 9.297-13.193z"/>
+    <rect x="21.6" y="18.2" width="10.4" height="3.6" rx="1.8" fill="#e9e5f8"/>
+    <rect x="21.6" y="24"   width="7.2"  height="3.6" rx="1.8" fill="#b7a5f5"/>
+  </svg>
+</div>

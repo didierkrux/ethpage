@@ -20,9 +20,26 @@ export interface FileConfig {
 const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src')
 const readJson = (f: string) => JSON.parse(readFileSync(join(SRC, f), 'utf8')) as FileConfig
 
+// With several deployments in one checkout (e.g. a personal page and the
+// public ethpage.eth viewer), CONFIG=<name> selects config.<name>.json.
+// With exactly one override present it is used implicitly; with several and
+// no CONFIG the build fails loudly instead of merging them by accident.
 export function loadConfig(): FileConfig {
   const overrides = readdirSync(SRC)
     .filter(f => /^config\..+\.json$/.test(f) && f !== 'config.json')
     .sort()
+  const selected = process.env.CONFIG
+  if (selected) {
+    const file = `config.${selected}.json`
+    if (!overrides.includes(file)) {
+      throw new Error(`CONFIG=${selected} but src/${file} does not exist (found: ${overrides.join(', ') || 'none'})`)
+    }
+    return { ...readJson('config.json'), ...readJson(file) }
+  }
+  if (overrides.length > 1) {
+    throw new Error(
+      `Several config overrides found (${overrides.join(', ')}). Pick one with CONFIG=<name>, e.g. CONFIG=${overrides[0].slice(7, -5)} pnpm dev`
+    )
+  }
   return overrides.reduce((acc, f) => ({ ...acc, ...readJson(f) }), { ...readJson('config.json') })
 }

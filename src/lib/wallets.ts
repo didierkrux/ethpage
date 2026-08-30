@@ -29,7 +29,7 @@ interface AnnounceEvent extends Event {
 
 const announced: DiscoveredWallet[] = []
 let active: EIP1193Provider | null = null
-const STORAGE_KEY = 'ens-page:wallet-rdns'
+const STORAGE_KEY = 'ethpage:wallet-rdns'
 
 // Fired when the effective provider may have changed: an explicit pick, or
 // the remembered wallet announcing itself after page load (extensions inject
@@ -84,7 +84,7 @@ async function initWalletConnect(projectId: string, requiredChainId = 1): Promis
     optionalChains: [1, 8453, 10, 42161, 11155111],
     showQrModal: true,
     metadata: {
-      name: document.title || 'ens-page',
+      name: document.title || 'ethpage',
       description: 'ENS profile page',
       url: window.location.origin,
       icons: [],

@@ -1,0 +1,39 @@
+<!doctype html><meta charset="utf-8"><style>
+@font-face { font-family: Poppins; src: url('/Users/dj/git/ens-page/node_modules/@fontsource/poppins/files/poppins-latin-700-normal.woff2'); font-weight: 700; }
+@font-face { font-family: Inter; src: url('/Users/dj/git/ens-page/node_modules/@fontsource/inter/files/inter-latin-500-normal.woff2'); font-weight: 500; }
+* { margin: 0; box-sizing: border-box; }
+body { width: 1800px; height: 600px; overflow: hidden; }
+.hero { width: 1800px; height: 600px; position: relative; display: flex; align-items: center;
+  background: radial-gradient(70% 120% at 20% -20%, #4c1d95 0%, #171223 55%, #0a0a0f 100%); }
+.glow { position: absolute; inset: 0;
+  background: radial-gradient(30% 60% at 78% 30%, rgba(217,70,239,.22), transparent 70%),
+              radial-gradient(35% 70% at 55% 110%, rgba(139,92,246,.20), transparent 70%); }
+.copy { position: relative; padding-left: 130px; }
+h1 { font-family: Poppins; font-weight: 700; font-size: 130px; color: #fff; letter-spacing: -2px; }
+h1 .eth { color: #a78bfa; }
+p { font-family: Inter; font-weight: 500; font-size: 32px; max-width: 1010px; color: rgba(255,255,255,.72); margin-top: 10px; letter-spacing: .5px; }
+.mini { position: absolute; right: 190px; top: 50%; transform: translateY(-50%) rotate(6deg);
+  width: 230px; height: 280px; background: rgba(255,255,255,.97); border-radius: 34px; overflow: hidden;
+  box-shadow: 0 40px 80px rgba(0,0,0,.5), 0 0 0 1px rgba(255,255,255,.15); }
+.band { height: 84px; background: linear-gradient(120deg, #8b5cf6, #a855f7 55%, #d946ef); }
+.av { position: absolute; left: 50%; top: 84px; transform: translate(-50%,-50%); width: 62px; height: 62px;
+  border-radius: 50%; background: #171223; box-shadow: 0 0 0 6px rgba(255,255,255,.97);
+  display: flex; align-items: center; justify-content: center; }
+.bar { border-radius: 7px; background: #d9d4e8; margin: 0 auto; }
+.b1 { width: 110px; height: 15px; margin-top: 44px; }
+.b2 { width: 150px; height: 10px; margin-top: 9px; background: #e6e2f2; }
+.btn { width: 170px; height: 30px; border-radius: 11px; margin: 11px auto 0; border: 2px solid #cdc3ec; background: #f4f1fc; }
+.btn.v { border-color: #8b5cf6; background: linear-gradient(120deg, rgba(139,92,246,.16), rgba(217,70,239,.14)); }
+</style>
+<div class="hero"><div class="glow"></div>
+  <div class="mini">
+    <div class="band"></div>
+    <div class="av"><svg width="28" height="46" viewBox="0 0 18.662 30.488"><path fill="#a78bfa" d="M0 15.586 9.365 0l9.297 15.586-9.297 5.674z"/><path fill="#8b5cf6" d="M9.365 22.969 0 17.295l9.365 13.193 9.297-13.193z"/></svg></div>
+    <div class="bar b1"></div><div class="bar b2"></div>
+    <div class="btn v"></div><div class="btn"></div>
+  </div>
+  <div class="copy">
+    <h1>EthPage<span class="eth">.eth</span></h1>
+    <p>Your own ENS page. Profile, links, onchain recommendations.</p>
+  </div>
+</div>

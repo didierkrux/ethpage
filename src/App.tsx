@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { GitFork } from 'lucide-react'
-import { CONFIG, ENS_NAME, IS_PREVIEW } from './config'
+import { CONFIG, ENS_NAME, IS_PREVIEW, NAME_FROM_QUERY } from './config'
+import { ViewerLanding } from './components/ViewerLanding'
 import { fetchEnsProfile, type EnsProfile } from './lib/ens'
 import { Profile, ProfileSkeleton } from './components/Profile'
 import { Links } from './components/Links'
@@ -52,17 +53,22 @@ export default function App() {
       .catch(() => setProfile({ status: 'error' }))
   }, [])
 
+  // Viewer deployments land on a name input when no ?name= is given.
+  const isLanding = CONFIG.viewer === true && !NAME_FROM_QUERY
+
   useEffect(() => {
+    if (isLanding) return
     document.title = ENS_NAME // until the name record loads
     loadProfile()
-  }, [loadProfile])
+  }, [loadProfile, isLanding])
 
   return (
     <main className="min-h-screen px-4 py-4 font-sans sm:py-6">
       <Backdrop header={profile.status === 'ready' ? profile.data.header : null} />
       <div className="mx-auto w-full max-w-2xl rounded-2xl bg-white/80 p-5 shadow-xl shadow-neutral-900/5 ring-1 ring-white/60 backdrop-blur-xl dark:bg-neutral-900/75 dark:shadow-black/20 dark:ring-white/10 sm:p-8">
-        {profile.status === 'loading' && <ProfileSkeleton />}
-        {profile.status === 'error' && (
+        {isLanding && <ViewerLanding />}
+        {!isLanding && profile.status === 'loading' && <ProfileSkeleton />}
+        {!isLanding && profile.status === 'error' && (
           <div className="py-12 text-center">
             <p className="text-neutral-600 dark:text-neutral-300">Could not load the {ENS_NAME} profile.</p>
             <button
@@ -78,7 +84,7 @@ export default function App() {
         {/* The links are the page owner's, not the previewed name's. */}
         {!IS_PREVIEW && <Links links={CONFIG.links} />}
 
-        {CONFIG.recommendations?.schemaUid && <Recommendations />}
+        {!isLanding && CONFIG.recommendations?.schemaUid && <Recommendations />}
       </div>
       <p className="mx-auto mt-3 max-w-2xl text-center text-xs text-neutral-400 dark:text-neutral-500">
         Served from IPFS. Profile data lives on ENS (
