@@ -30,6 +30,26 @@ interface AnnounceEvent extends Event {
 const announced: DiscoveredWallet[] = []
 let active: EIP1193Provider | null = null
 const STORAGE_KEY = 'ethpage:wallet-rdns'
+// Set on explicit disconnect: injected wallets stay authorized browser-side,
+// so without this flag the silent eth_accounts sync would re-adopt the
+// account immediately after disconnecting. Cleared by any explicit connect.
+const DISCONNECT_KEY = 'ethpage:wallet-disconnected'
+
+function isDisconnected(): boolean {
+  try {
+    return localStorage.getItem(DISCONNECT_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+function clearDisconnected(): void {
+  try {
+    localStorage.removeItem(DISCONNECT_KEY)
+  } catch {
+    /* storage unavailable */
+  }
+}
 
 // Fired when the effective provider may have changed: an explicit pick, or
 // the remembered wallet announcing itself after page load (extensions inject
@@ -113,6 +133,7 @@ export async function activateWallet(
   wcProjectId?: string,
   wcChainId?: number
 ): Promise<void> {
+  clearDisconnected()
   let provider = wallet.provider
   if (!provider) {
     if (wallet.rdns !== WALLETCONNECT_RDNS || !wcProjectId) throw new Error('Wallet unavailable.')
@@ -132,7 +153,7 @@ export async function activateWallet(
 // storedRdns, but a WC session lives inside the (lazily loaded) provider, so
 // it needs an explicit async init on page load. No-op otherwise.
 export async function restoreRememberedWallet(wcProjectId?: string, wcChainId?: number): Promise<void> {
-  if (!wcProjectId || active || storedRdns() !== WALLETCONNECT_RDNS) return
+  if (isDisconnected() || !wcProjectId || active || storedRdns() !== WALLETCONNECT_RDNS) return
   try {
     active = await initWalletConnect(wcProjectId, wcChainId)
     notifyChange()
@@ -156,6 +177,7 @@ export async function disconnectWallet(): Promise<void> {
   active = null
   try {
     localStorage.removeItem(STORAGE_KEY)
+    localStorage.setItem(DISCONNECT_KEY, '1')
   } catch {
     /* storage unavailable */
   }
@@ -178,6 +200,7 @@ export function isWalletConnect(provider: EIP1193Provider | null): boolean {
 }
 
 export async function connectWallet(): Promise<Address> {
+  clearDisconnected()
   const provider = activeProvider()
   if (!provider) throw new Error('No wallet detected. Open this page in a browser with an Ethereum wallet.')
   if (isWalletConnect(provider)) {
@@ -198,6 +221,7 @@ export async function connectWallet(): Promise<Address> {
 // Silent auto-reconnect: eth_accounts never prompts, it only returns an
 // account the wallet has already authorized for this origin.
 export async function getConnectedAccount(): Promise<Address | null> {
+  if (isDisconnected()) return null
   try {
     const provider = activeProvider()
     if (!provider) return null

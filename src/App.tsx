@@ -110,8 +110,9 @@ export default function App() {
       {(CONFIG.repo || CONFIG.viewerUrl) && (
         <p className="mx-auto mt-3 flex max-w-2xl flex-wrap items-center justify-center gap-2 text-center">
           {/* Instant path: view/share your page on the public viewer. Hidden
-              on viewer deployments, where it would point at itself. */}
-          {CONFIG.viewerUrl && !CONFIG.viewer && (
+              only on the viewer landing itself, where the input IS this CTA;
+              on previews it leads back to the name input. */}
+          {CONFIG.viewerUrl && !isLanding && (
             <a
               href={CONFIG.viewerUrl}
               target="_blank"
