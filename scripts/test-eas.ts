@@ -7,13 +7,8 @@
 import { strict as assert } from 'node:assert'
 import type { Address } from 'viem'
 import { resolveEnsAddress } from '../src/lib/ens'
-import {
-  EFP_API,
-  RECOMMENDATION_SCHEMA,
-  computeSchemaUid,
-  efpFollowStates,
-  fetchRecommendations,
-} from '../src/lib/eas'
+import { RECOMMENDATION_SCHEMA, computeSchemaUid, efpFollowStates, fetchRecommendations } from '../src/lib/eas'
+import { EFP_API, fetchEfpStats } from '../src/lib/efp'
 import { loadConfig } from './load-config'
 
 // Pure regression check: UID derivation must match how the SchemaRegistry
@@ -30,6 +25,10 @@ const name = cfg.ensName!
 const receiver = await resolveEnsAddress(name, cfg.rpcUrls)
 assert.ok(receiver, `${name} resolves to an address`)
 console.log(`${name} -> ${receiver}`)
+
+const stats = await fetchEfpStats(name)
+assert.ok(stats && stats.followers >= 0 && stats.following >= 0, 'EFP stats resolve')
+console.log(`EFP stats: ${stats!.followers} followers, ${stats!.following} following`)
 
 // EFP self-consistency: someone the receiver follows must gate as public,
 // and a throwaway address must not.

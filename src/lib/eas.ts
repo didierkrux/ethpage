@@ -10,6 +10,7 @@ import {
   type Hex,
 } from 'viem'
 import { arbitrum, base, mainnet, optimism, sepolia } from 'viem/chains'
+import { EFP_API } from './efp'
 import { lookupEnsName } from './ens'
 import { activeProvider, connectWallet } from './wallets'
 
@@ -184,8 +185,6 @@ function decodeRow(row: AttestationRow): Omit<Recommendation, 'isPublic' | 'atte
 // the receiver's primary list id, then one batch for every attester. Errors
 // and accounts without an EFP list count as not-followed (hidden), the safe
 // default.
-export const EFP_API = 'https://api.ethfollow.xyz/api/v1'
-
 async function fetchPrimaryList(receiver: Address): Promise<string | null> {
   try {
     const details = (await (await fetch(`${EFP_API}/users/${receiver}/details`)).json()) as {

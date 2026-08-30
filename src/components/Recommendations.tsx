@@ -150,7 +150,7 @@ export function Recommendations() {
 
   return (
     <section className="mt-8">
-      <h2 className="text-center font-display text-lg font-bold">Recommendations</h2>
+      <h2 className="text-center font-display text-lg font-bold">Onchain recommendations</h2>
 
       {shown.length > 0 && (
         <div className="mt-3 space-y-3">

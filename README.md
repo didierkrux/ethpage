@@ -33,7 +33,7 @@ time. No backend, no analytics, no API keys.
    | `links[]` | yes | Link buttons: `title` + `url`, optional `emoji` or `image` |
    | `accent` | no | Accent color (link text/hover), default `#171717` |
    | `repo` | no | Shows a "Create your own ENS page" footer link to the repo; omit to hide it |
-   | `efp` | no | [EFP](https://efp.app) icon in the social row, on by default; `false` hides it |
+   | `efp` | no | [EFP](https://efp.app) icon + follower/following counts, on by default; `false` hides both |
    | `og` | no | `title`/`description` for share previews, defaults derive from `ensName` |
    | `rpcUrls` | no | Your own Ethereum RPC endpoints; defaults are keyless public ones |
 
@@ -68,7 +68,7 @@ time. No backend, no analytics, no API keys.
 
 Re-run step 5 whenever you change the config. ENS record edits never need it.
 
-## Recommendations (optional)
+## Onchain recommendations (optional)
 
 A web3-native take on LinkedIn recommendations: visitors connect a wallet and
 sign an [EAS](https://attest.org) attestation on Base (schema

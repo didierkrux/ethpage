@@ -1,4 +1,4 @@
-import { useState, type ComponentType } from 'react'
+import { useEffect, useState, type ComponentType } from 'react'
 // Linkedin comes from lucide: simple-icons removed the LinkedIn mark for
 // trademark reasons.
 import { Mail, Globe, Linkedin } from 'lucide-react'
@@ -16,6 +16,7 @@ import {
   SiFacebook,
 } from '@icons-pack/react-simple-icons'
 import type { EnsProfile } from '../lib/ens'
+import { fetchEfpStats, type EfpStats as EfpStatsData } from '../lib/efp'
 import { socialUrl, socialLabel } from '../lib/socials'
 import { CONFIG } from '../config'
 
@@ -44,6 +45,35 @@ const ICONS: Record<string, ComponentType<{ className?: string }>> = {
   'com.linkedin': Linkedin,
   'com.facebook': SiFacebook,
   email: Mail,
+}
+
+// Follower/following counts from EFP, linked to the profile there. Hidden
+// for names with no EFP presence (0/0 or the stats call failing), and
+// disabled together with the EFP icon via "efp": false in the config.
+function EfpStats({ name }: { name: string }) {
+  const [stats, setStats] = useState<EfpStatsData | null>(null)
+  useEffect(() => {
+    let stale = false
+    setStats(null)
+    fetchEfpStats(name).then(s => !stale && setStats(s))
+    return () => {
+      stale = true
+    }
+  }, [name])
+
+  if (!stats || (stats.followers === 0 && stats.following === 0)) return null
+  return (
+    <a
+      href={`https://efp.app/${name}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-3 text-sm text-neutral-500 transition hover:text-neutral-700"
+    >
+      <span className="font-semibold text-neutral-900">{stats.following.toLocaleString()}</span> Following
+      <span className="mx-1.5 text-neutral-300">·</span>
+      <span className="font-semibold text-neutral-900">{stats.followers.toLocaleString()}</span> Followers
+    </a>
+  )
 }
 
 // "https://example.com/en/" -> "example.com": the pill shows a readable name,
@@ -149,6 +179,8 @@ export function Profile({ profile }: { profile: EnsProfile }) {
             </a>
           )}
         </div>
+
+        {CONFIG.efp !== false && <EfpStats name={profile.name} />}
       </div>
     </div>
   )

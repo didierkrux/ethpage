@@ -96,9 +96,9 @@ export function EasSetup() {
   return (
     <main className="min-h-screen bg-neutral-100 px-4 py-8 font-sans text-neutral-900">
       <div className="mx-auto w-full max-w-xl rounded-2xl bg-white p-6 shadow-sm sm:p-8">
-        <h1 className="font-display text-xl font-bold">Recommendations schema setup</h1>
+        <h1 className="font-display text-xl font-bold">Onchain recommendations schema setup</h1>
         <p className="mt-2 text-sm text-neutral-600">
-          One-time step to enable the Recommendations section: the{' '}
+          One-time step to enable the Onchain recommendations section: the{' '}
           <a href="https://attest.org" target="_blank" rel="noopener noreferrer" className="text-accent underline">
             EAS
           </a>{' '}
