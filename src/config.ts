@@ -51,3 +51,8 @@ function resolveName(): string {
 }
 
 export const ENS_NAME = resolveName()
+
+// True when ?name= is previewing a different name than the configured one:
+// name-driven data (profile, socials, recommendations) follows the preview,
+// while owner-specific baked content (the links) is hidden.
+export const IS_PREVIEW = ENS_NAME.toLowerCase() !== CONFIG.ensName.toLowerCase()

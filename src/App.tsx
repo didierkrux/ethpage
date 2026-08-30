@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { GitFork } from 'lucide-react'
-import { CONFIG, ENS_NAME } from './config'
+import { CONFIG, ENS_NAME, IS_PREVIEW } from './config'
 import { fetchEnsProfile, type EnsProfile } from './lib/ens'
 import { Profile, ProfileSkeleton } from './components/Profile'
 import { Links } from './components/Links'
@@ -75,7 +75,8 @@ export default function App() {
         )}
         {profile.status === 'ready' && <Profile profile={profile.data} />}
 
-        <Links links={CONFIG.links} />
+        {/* The links are the page owner's, not the previewed name's. */}
+        {!IS_PREVIEW && <Links links={CONFIG.links} />}
 
         {CONFIG.recommendations?.schemaUid && <Recommendations />}
       </div>

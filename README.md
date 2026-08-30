@@ -59,7 +59,8 @@ time. No backend, no analytics, no API keys.
    the [ENS metadata service](https://metadata.ens.domains), so NFT and
    `ipfs://` record values work too.
 4. Preview locally: `pnpm install && pnpm dev`. You can check any name with
-   `http://localhost:3000/?name=any.eth`.
+   `http://localhost:3000/?name=any.eth` (previews hide your configured
+   links, since those belong to your page).
 5. Deploy: `pnpm deploy:pin` with a `PINATA_JWT`. Copy `.env.example` to
    `.env` (gitignored) and fill it in, or pass it inline. Free key from
    [app.pinata.cloud/developers/api-keys](https://app.pinata.cloud/developers/api-keys),
