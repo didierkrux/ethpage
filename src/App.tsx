@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { GitFork } from 'lucide-react'
+import { GitFork, Search } from 'lucide-react'
 import { CONFIG, ENS_NAME, IS_PREVIEW, NAME_FROM_QUERY } from './config'
 import { ViewerLanding } from './components/ViewerLanding'
 import { fetchEnsProfile, type EnsProfile } from './lib/ens'
@@ -53,20 +53,26 @@ export default function App() {
       .catch(() => setProfile({ status: 'error' }))
   }, [])
 
-  // Viewer deployments land on a name input when no ?name= is given.
+  // Viewer deployments land on a name input when no ?name= is given. The
+  // profile still loads: the landing wears the viewer name's own records
+  // (header art as backdrop, avatar above the wordmark).
   const isLanding = CONFIG.viewer === true && !NAME_FROM_QUERY
 
   useEffect(() => {
-    if (isLanding) return
     document.title = ENS_NAME // until the name record loads
     loadProfile()
-  }, [loadProfile, isLanding])
+  }, [loadProfile])
 
   return (
     <main className="min-h-screen px-4 py-4 font-sans sm:py-6">
       <Backdrop header={profile.status === 'ready' ? profile.data.header : null} />
       <div className="mx-auto w-full max-w-2xl rounded-2xl bg-white/80 p-5 shadow-xl shadow-neutral-900/5 ring-1 ring-white/60 backdrop-blur-xl dark:bg-neutral-900/75 dark:shadow-black/20 dark:ring-white/10 sm:p-8">
-        {isLanding && <ViewerLanding />}
+        {isLanding && (
+          <ViewerLanding
+            avatar={profile.status === 'ready' ? profile.data.avatar : null}
+            header={profile.status === 'ready' ? profile.data.header : null}
+          />
+        )}
         {!isLanding && profile.status === 'loading' && <ProfileSkeleton />}
         {!isLanding && profile.status === 'error' && (
           <div className="py-12 text-center">
@@ -79,39 +85,54 @@ export default function App() {
             </button>
           </div>
         )}
-        {profile.status === 'ready' && <Profile profile={profile.data} />}
+        {!isLanding && profile.status === 'ready' && <Profile profile={profile.data} />}
 
         {/* The links are the page owner's, not the previewed name's. */}
         {!IS_PREVIEW && <Links links={CONFIG.links} />}
 
         {!isLanding && CONFIG.recommendations?.schemaUid && <Recommendations />}
       </div>
-      <p className="mx-auto mt-3 max-w-2xl text-center text-xs text-neutral-400 dark:text-neutral-500">
-        Served from IPFS. Profile data lives on ENS (
+      <p className="mx-auto mt-3 max-w-2xl text-center text-xs text-neutral-400 dark:text-neutral-400">
+        Served from IPFS <span className="mx-1 text-neutral-300 dark:text-neutral-600">·</span> profile data lives on{' '}
         <a
           href={`https://app.ens.domains/${ENS_NAME}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="underline hover:text-neutral-600 dark:hover:text-neutral-300"
+          className="underline hover:text-neutral-600 dark:hover:text-neutral-200"
         >
           {ENS_NAME}
-        </a>
-        ).{' '}
+        </a>{' '}
+        <span className="mx-1 text-neutral-300 dark:text-neutral-600">·</span>
         <span title={document.querySelector<HTMLMetaElement>('meta[name="build"]')?.content ?? undefined}>
           v{__APP_VERSION__}
         </span>
       </p>
-      {CONFIG.repo && (
-        <p className="mx-auto mt-3 max-w-2xl text-center">
-          <a
-            href={CONFIG.repo}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200/70 bg-white/70 px-4 py-2 text-sm font-medium text-accent shadow-sm backdrop-blur transition hover:border-accent dark:border-white/10 dark:bg-white/5"
-          >
-            <GitFork className="h-4 w-4" />
-            Create your own ENS page
-          </a>
+      {(CONFIG.repo || CONFIG.viewerUrl) && (
+        <p className="mx-auto mt-3 flex max-w-2xl flex-wrap items-center justify-center gap-2 text-center">
+          {/* Instant path: view/share your page on the public viewer. Hidden
+              on viewer deployments, where it would point at itself. */}
+          {CONFIG.viewerUrl && !CONFIG.viewer && (
+            <a
+              href={CONFIG.viewerUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200/70 bg-white/70 px-4 py-2 text-sm font-medium text-accent shadow-sm backdrop-blur transition hover:border-accent dark:border-white/10 dark:bg-white/5"
+            >
+              <Search className="h-4 w-4" />
+              View your ENS page
+            </a>
+          )}
+          {CONFIG.repo && (
+            <a
+              href={CONFIG.repo}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200/70 bg-white/70 px-4 py-2 text-sm font-medium text-accent shadow-sm backdrop-blur transition hover:border-accent dark:border-white/10 dark:bg-white/5"
+            >
+              <GitFork className="h-4 w-4" />
+              Create your own ENS page
+            </a>
+          )}
         </p>
       )}
       <QrBadge />

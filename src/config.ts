@@ -17,6 +17,9 @@ export interface SiteConfig {
   // Viewer deployments (e.g. ethpage.eth): with no ?name= in the URL, show
   // a name-input landing instead of the configured profile.
   viewer?: boolean
+  // Public viewer to send visitors to for an instant page of their own
+  // (footer pill; hidden on viewer deployments themselves).
+  viewerUrl?: string
   // Enables the WalletConnect option in the wallet picker (mobile signing).
   // Free project id from cloud.reown.com; absent = injected wallets only.
   walletConnectProjectId?: string

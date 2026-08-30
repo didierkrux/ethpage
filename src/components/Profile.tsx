@@ -91,7 +91,7 @@ function hostname(url: string): string {
 
 // The full-bleed pieces cancel the card's responsive padding (p-5 sm:p-8),
 // so every negative margin/width here carries the matching sm: variant.
-const FULL_BLEED = '-mx-5 -mt-5 w-[calc(100%+2.5rem)] max-w-none sm:-mx-8 sm:-mt-8 sm:w-[calc(100%+4rem)]'
+export const FULL_BLEED = '-mx-5 -mt-5 w-[calc(100%+2.5rem)] max-w-none sm:-mx-8 sm:-mt-8 sm:w-[calc(100%+4rem)]'
 
 export function ProfileSkeleton() {
   return (

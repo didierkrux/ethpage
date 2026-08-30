@@ -76,26 +76,30 @@ console.log(`Then verify at https://${ensName}.limo/`)
 // and DHT discovery takes 30-90s. Requesting every file now means the first
 // real visitor gets cache hits instead of doing that wait. Unchanged assets
 // keep their hashed filenames, so most are warm from previous deploys.
+// Fast pass, ~60s worst case: wait briefly for the index to become
+// discoverable, then fire one request per file per gateway. A request is
+// enough to start the gateway fetching; anything still cold finishes
+// warming on its own or on the first visit.
 const GATEWAYS = ['https://ipfs.io/ipfs', 'https://dweb.link/ipfs']
-async function warmGateway(base: string): Promise<boolean> {
-  const deadline = Date.now() + 150_000
+async function warmGateway(base: string): Promise<number> {
+  const deadline = Date.now() + 45_000
   while (Date.now() < deadline) {
     try {
-      const r = await fetch(`${base}/${IpfsHash}/`, { signal: AbortSignal.timeout(20_000) })
+      const r = await fetch(`${base}/${IpfsHash}/`, { signal: AbortSignal.timeout(15_000) })
       if (r.ok) break
     } catch {
       /* not discoverable yet */
     }
-    await new Promise(resolve => setTimeout(resolve, 3000))
+    await new Promise(resolve => setTimeout(resolve, 2000))
   }
   const assets = await Promise.allSettled(
-    rels.map(rel => fetch(`${base}/${IpfsHash}/${rel}`, { signal: AbortSignal.timeout(45_000) }))
+    rels.map(rel => fetch(`${base}/${IpfsHash}/${rel}`, { signal: AbortSignal.timeout(15_000) }))
   )
-  return assets.every(a => a.status === 'fulfilled' && a.value.ok)
+  return assets.filter(a => a.status === 'fulfilled' && a.value.ok).length
 }
 console.log('\nwarming gateways (ipfs.io, dweb.link)…')
 const warmed = await Promise.all(GATEWAYS.map(warmGateway))
-GATEWAYS.forEach((g, i) => console.log(`${warmed[i] ? 'warm' : 'partial'}  ${g}/${IpfsHash}/`))
+GATEWAYS.forEach((g, i) => console.log(`${warmed[i]}/${count} warm  ${g}/${IpfsHash}/`))
 
 // Prune superseded pins so the free plan's file quota doesn't fill up:
 // keep the newest KEEP versions, and never touch the just-pinned CID or

@@ -1,13 +1,18 @@
 import { useState, type FormEvent } from 'react'
 import { Search } from 'lucide-react'
 import { CONFIG } from '../config'
+import { FULL_BLEED } from './Profile'
 
 // Landing for viewer deployments (config.viewer = true, no ?name= given):
 // instead of the configured profile, an input that opens any name's page via
 // the same ?name= mechanism.
-export function ViewerLanding() {
+export function ViewerLanding({ avatar, header }: { avatar: string | null; header: string | null }) {
   const [value, setValue] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [headerFailed, setHeaderFailed] = useState(false)
+  // The banner already carries the wordmark and tagline, so when it renders
+  // the text block below stays minimal (no duplicated title).
+  const banner = header && !headerFailed ? header : null
 
   const submit = (e: FormEvent) => {
     e.preventDefault()
@@ -22,8 +27,30 @@ export function ViewerLanding() {
   }
 
   return (
-    <div className="py-10 text-center sm:py-14">
-      <h1 className="font-display text-3xl font-bold">{CONFIG.og?.title || CONFIG.ensName}</h1>
+    <div className={banner ? 'pb-10 text-center sm:pb-14' : 'py-10 text-center sm:py-14'}>
+      {banner && (
+        <img
+          src={banner}
+          alt={CONFIG.og?.title || CONFIG.ensName}
+          onError={() => setHeaderFailed(true)}
+          className={`${FULL_BLEED} mb-8 rounded-t-2xl object-cover aspect-[3/1]`}
+        />
+      )}
+      {!banner && (
+        <>
+          {avatar && (
+            <img
+              src={avatar}
+              alt=""
+              onError={e => {
+                e.currentTarget.style.display = 'none'
+              }}
+              className="mx-auto mb-5 h-20 w-20 rounded-2xl object-cover shadow-lg ring-1 ring-white/40 dark:ring-white/15"
+            />
+          )}
+          <h1 className="font-display text-3xl font-bold">{CONFIG.og?.title || CONFIG.ensName}</h1>
+        </>
+      )}
       <p className="mx-auto mt-2 max-w-sm text-neutral-600 dark:text-neutral-300">
         Any ENS name as a page: profile, links, and onchain recommendations, straight from the records.
       </p>

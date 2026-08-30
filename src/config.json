@@ -1,6 +1,7 @@
 {
   "ensName": "yourname.eth",
   "repo": "https://github.com/didierkrux/ethpage",
+  "viewerUrl": "https://ethpage.eth.limo",
   "og": { "title": "", "description": "" },
   "links": [
     { "title": "My Website", "url": "https://example.com", "emoji": "🌐" },

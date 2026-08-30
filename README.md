@@ -38,6 +38,7 @@ time. No backend, no analytics, no API keys.
    | `rpcUrls` | no | Your own Ethereum RPC endpoints; defaults are keyless public ones |
    | `walletConnectProjectId` | no | Adds WalletConnect to the wallet picker so phones can sign recommendations; free id from [cloud.reown.com](https://cloud.reown.com) |
    | `viewer` | no | Viewer mode: with no `?name=` given, show a name input instead of the configured profile (see [ethpage.eth.limo](https://ethpage.eth.limo)) |
+   | `viewerUrl` | no | Footer "View your ENS page" pill pointing at a public viewer; the template defaults to ethpage.eth.limo, omit to hide |
 
    Link button icons resolve as `image` > `emoji` > the site's favicon
    (automatic, via DuckDuckGo's icon service). `image` accepts any URL,
