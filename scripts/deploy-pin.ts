@@ -32,15 +32,16 @@ async function* walk(dir: string): AsyncGenerator<string> {
 }
 
 const form = new FormData()
-let count = 0
+const rels: string[] = []
 for await (const file of walk(DIST)) {
   const rel = relative(DIST, file).split(sep).join('/')
+  rels.push(rel)
   // A shared top-level folder in the filenames makes Pinata pin the upload
   // as a single directory whose CID serves index.html at its root.
   const bytes = new Uint8Array(await readFile(file))
   form.append('file', new File([bytes], `${PIN_NAME}/${rel}`))
-  count++
 }
+const count = rels.length
 if (count === 0) {
   console.error('dist/ is empty, run pnpm build first')
   process.exit(1)
@@ -70,6 +71,31 @@ console.log(`Preview:    https://ipfs.io/ipfs/${IpfsHash}/`)
 console.log(`\nTo go live: open https://app.ens.domains/${ensName} -> Records -> Edit Records ->`)
 console.log(`set Content Hash to ipfs://${IpfsHash} and confirm with the name owner's wallet.`)
 console.log(`Then verify at https://${ensName}.limo/`)
+
+// Warm the big public gateways: they only fetch a new CID when first asked,
+// and DHT discovery takes 30-90s. Requesting every file now means the first
+// real visitor gets cache hits instead of doing that wait. Unchanged assets
+// keep their hashed filenames, so most are warm from previous deploys.
+const GATEWAYS = ['https://ipfs.io/ipfs', 'https://dweb.link/ipfs']
+async function warmGateway(base: string): Promise<boolean> {
+  const deadline = Date.now() + 150_000
+  while (Date.now() < deadline) {
+    try {
+      const r = await fetch(`${base}/${IpfsHash}/`, { signal: AbortSignal.timeout(20_000) })
+      if (r.ok) break
+    } catch {
+      /* not discoverable yet */
+    }
+    await new Promise(resolve => setTimeout(resolve, 3000))
+  }
+  const assets = await Promise.allSettled(
+    rels.map(rel => fetch(`${base}/${IpfsHash}/${rel}`, { signal: AbortSignal.timeout(45_000) }))
+  )
+  return assets.every(a => a.status === 'fulfilled' && a.value.ok)
+}
+console.log('\nwarming gateways (ipfs.io, dweb.link)…')
+const warmed = await Promise.all(GATEWAYS.map(warmGateway))
+GATEWAYS.forEach((g, i) => console.log(`${warmed[i] ? 'warm' : 'partial'}  ${g}/${IpfsHash}/`))
 
 // Prune superseded pins so the free plan's file quota doesn't fill up:
 // keep the newest KEEP versions, and never touch the just-pinned CID or
