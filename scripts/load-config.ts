@@ -1,8 +1,8 @@
 // Node-side config loader shared by the scripts and vite.config.ts — the
 // same merge src/config.ts does with import.meta.glob (which is Vite-only):
-// the committed generic template overridden key-by-key by the optional
-// gitignored personal config.
-import { existsSync, readFileSync } from 'node:fs'
+// the committed generic template overridden key-by-key by any gitignored
+// config.<name>.json personal config, in filename order.
+import { readdirSync, readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -21,8 +21,8 @@ const SRC = join(dirname(fileURLToPath(import.meta.url)), '..', 'src')
 const readJson = (f: string) => JSON.parse(readFileSync(join(SRC, f), 'utf8')) as FileConfig
 
 export function loadConfig(): FileConfig {
-  return {
-    ...readJson('config.json'),
-    ...(existsSync(join(SRC, 'config.custom.json')) ? readJson('config.custom.json') : {}),
-  }
+  const overrides = readdirSync(SRC)
+    .filter(f => /^config\..+\.json$/.test(f) && f !== 'config.json')
+    .sort()
+  return overrides.reduce((acc, f) => ({ ...acc, ...readJson(f) }), { ...readJson('config.json') })
 }

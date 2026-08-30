@@ -2,13 +2,13 @@
 
 A minimal link-in-bio profile page for your ENS name, served from IPFS at
 `https://yourname.eth.limo/`. Avatar, header image, display name, bio, website
-and social icons resolve **live from your ENS records** — edit them at
+and social icons resolve **live from your ENS records**: edit them at
 [app.ens.domains](https://app.ens.domains) and the page updates with no
 redeploy. Only the link buttons (and share-preview tags) are baked in at build
 time. No backend, no analytics, no API keys.
 
 <p align="center">
-  <a href="https://didierkrux.eth.limo"><img src="docs/screenshot.png" alt="ens-page — didierkrux.eth (owner view, with an EAS recommendation pending EFP approval)" width="480"></a>
+  <a href="https://didierkrux.eth.limo"><img src="docs/screenshot.png" alt="ens-page: didierkrux.eth (owner view, with an EAS recommendation pending EFP approval)" width="480"></a>
 </p>
 
 ## Fork it
@@ -36,18 +36,19 @@ time. No backend, no analytics, no API keys.
    | `efp` | no | [EFP](https://efp.app) icon + follower/following counts, on by default; `false` hides both |
    | `og` | no | `title`/`description` for share previews, defaults derive from `ensName` |
    | `rpcUrls` | no | Your own Ethereum RPC endpoints; defaults are keyless public ones |
+   | `walletConnectProjectId` | no | Adds WalletConnect to the wallet picker so phones can sign recommendations; free id from [cloud.reown.com](https://cloud.reown.com) |
 
    Link button icons resolve as `image` > `emoji` > the site's favicon
-   (automatic, via DuckDuckGo's icon service). `image` accepts any URL —
+   (automatic, via DuckDuckGo's icon service). `image` accepts any URL,
    e.g. `https://cdn.simpleicons.org/x` for monochrome brand icons, or
    another site's favicon via the same DuckDuckGo service, e.g.
    `"image": "https://icons.duckduckgo.com/ip3/poap.xyz.ico"` (handy when a
    link points at a mirror but you want the original brand's icon). Favicons
    and such URLs are fetched by the visitor's browser at load time.
 
-   Alternatively, put your config in `src/config.custom.json` (same schema,
-   gitignored, overrides `config.json` key by key) to keep your repo a clean
-   template for the next person.
+   Alternatively, put your config in `src/config.<yourname>.json` (same
+   schema, gitignored, overrides `config.json` key by key) to keep your repo
+   a clean template for the next person.
 
 3. Set your ENS records (all optional, shown when present): `avatar`,
    `header`, `description`, `url`, `name` (display name), and socials
@@ -57,9 +58,9 @@ time. No backend, no analytics, no API keys.
    Avatar and header render through
    the [ENS metadata service](https://metadata.ens.domains), so NFT and
    `ipfs://` record values work too.
-4. Preview locally: `pnpm install && pnpm dev` — you can check any name with
-   `http://localhost:5173/?name=any.eth`.
-5. Deploy: `pnpm deploy:pin` with a `PINATA_JWT` — copy `.env.example` to
+4. Preview locally: `pnpm install && pnpm dev`. You can check any name with
+   `http://localhost:3000/?name=any.eth`.
+5. Deploy: `pnpm deploy:pin` with a `PINATA_JWT`. Copy `.env.example` to
    `.env` (gitignored) and fill it in, or pass it inline. Free key from
    [app.pinata.cloud/developers/api-keys](https://app.pinata.cloud/developers/api-keys),
    scopes: `pinFileToIPFS`, plus `pinList` + `unpin` for automatic pruning of
@@ -85,16 +86,18 @@ Enable it in the config:
 "recommendations": { "chain": "base", "schemaUid": "0x049a46c11ec9ef3b1fb4b72b5e980b3e49d0eda0e9204dc50b1716e2ec1fc163" }
 ```
 
-That UID is the shared recommendation schema, already registered on Base —
-using it means recommendations stay portable across every ens-page.
+That UID is the shared recommendation schema, already registered on Base.
+Using it means recommendations stay portable across every ens-page.
 
 `chain` is one of `base` (default), `optimism`, `mainnet`, `arbitrum`,
 `sepolia`. **One-click setup:** open `/eas-setup.html` (locally via
-`pnpm dev`, or on the deployed site) — it checks whether the shared schema
+`pnpm dev`, or on the deployed site). It checks whether the shared schema
 (`string relationship,string recommendation`) is registered on your chain,
 registers it with your wallet if not, and hands you the exact config snippet.
-Reads go through the public easscan GraphQL indexer; writes need a browser
-wallet (in-app wallet browser on mobile).
+Reads go through the public easscan GraphQL indexer. Writes use an injected
+browser wallet, or any mobile wallet via WalletConnect when
+`walletConnectProjectId` is set (the WalletConnect code loads lazily, only
+when picked).
 
 ## Scripts
 

@@ -12,7 +12,7 @@ const DIST = join(ROOT, 'dist')
 
 const { ensName } = loadConfig()
 if (!ensName) {
-  console.error('ensName missing from src/config.json / src/config.custom.json')
+  console.error('ensName missing from src/config.json (or a config.<name>.json override)')
   process.exit(1)
 }
 const PIN_NAME = `ens-page-${ensName}`

@@ -2,7 +2,7 @@
 
 Static Vite + React SPA: an ENS-driven profile/links page pinned to IPFS,
 served at `https://<ensName>.eth.limo/`. Designed to be forked; this checkout
-deploys didierkrux.eth via the gitignored `src/config.custom.json`.
+deploys the owner's name via a gitignored `src/config.<name>.json` override.
 
 ## Commands
 
@@ -16,10 +16,10 @@ deploys didierkrux.eth via the gitignored `src/config.custom.json`.
 ## Architecture
 
 - Baked data comes from `src/config.json` (committed generic template)
-  shallow-merged with optional `src/config.custom.json` (gitignored personal
+  shallow-merged with any `src/config.<name>.json` (gitignored personal
   config). Editing either requires rebuild + re-pin. `src/config.ts` does the
   merge via `import.meta.glob` and is **Vite-only** — node-side consumers
-  (`vite.config.ts`, `scripts/*.ts`) fs-read and merge the two files.
+  (`vite.config.ts`, `scripts/*.ts`) fs-read and merge the files.
 - Everything else (avatar, header, bio, url, socials) resolves live from ENS
   records in the browser: `src/lib/ens.ts`, keyless public RPCs with viem
   `fallback` + multicall batching, `rpcUrls` passed in by callers. No API
@@ -41,13 +41,15 @@ deploys didierkrux.eth via the gitignored `src/config.custom.json`.
   follows). Writes are viem-only against the EAS contract; never add the
   eas-sdk (drags in ethers). Wallet plumbing is `src/lib/wallets.ts`:
   EIP-6963 discovery + picker, localStorage-remembered choice, silent
-  auto-reconnect; no WalletConnect (needs a cloud project ID = API key).
+  auto-reconnect; WalletConnect is opt-in via `walletConnectProjectId` in
+  the config and lazy-loaded only when picked.
 
 ## Constraints
 
 - Keep it minimal and forkable: no backend, no analytics, no env vars beyond
   `PINATA_JWT`, no new config surface without need.
-- Personal values (didierkrux.eth, his links/colors) live ONLY in the
-  gitignored `src/config.custom.json` — committed files and docs stay generic.
+- Personal values (the owner's ENS name, links, colors) live ONLY in a
+  gitignored `src/config.<name>.json` override — committed files and docs
+  stay generic.
 - Spec + decision log: `docs/superpowers/specs/2026-08-29-ens-page-design.md`
   (local working docs, gitignored — absent in fresh clones).

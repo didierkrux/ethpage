@@ -3,6 +3,7 @@
 import { strict as assert } from 'node:assert'
 import { SOCIAL_KEYS, socialUrl, socialLabel } from '../src/lib/socials'
 import { faviconUrl } from '../src/lib/favicon'
+import { blockieDataUri } from '../src/lib/blockies'
 
 assert.equal(socialUrl('com.twitter', 'example'), 'https://x.com/example')
 assert.equal(socialUrl('com.twitter', '@example'), 'https://x.com/example', 'strips @ prefix')
@@ -21,7 +22,7 @@ assert.equal(socialUrl('com.discord', '123456789012345678'), 'https://discord.co
 assert.equal(socialUrl('com.linkedin', 'example'), 'https://www.linkedin.com/in/example')
 assert.equal(socialLabel('com.discord'), 'Discord')
 assert.equal(socialLabel('com.linkedin'), 'LinkedIn')
-assert.equal(socialUrl('com.facebook', 'didier.krux'), 'https://www.facebook.com/didier.krux')
+assert.equal(socialUrl('com.facebook', 'john.doe'), 'https://www.facebook.com/john.doe', 'dots in usernames pass through')
 assert.equal(socialLabel('com.facebook'), 'Facebook')
 assert.equal(socialUrl('app.bsky', 'example.bsky.social'), 'https://bsky.app/profile/example.bsky.social')
 assert.equal(socialUrl('xyz.lens', 'example'), 'https://hey.xyz/u/example')
@@ -38,5 +39,10 @@ assert.ok(SOCIAL_KEYS.includes('com.twitter') && SOCIAL_KEYS.includes('email'))
 assert.equal(faviconUrl('https://app.poap.xyz/scan/x.eth'), 'https://icons.duckduckgo.com/ip3/app.poap.xyz.ico')
 assert.equal(faviconUrl('https://www.example.com'), 'https://icons.duckduckgo.com/ip3/www.example.com.ico')
 assert.equal(faviconUrl('not a url'), null, 'invalid URLs yield null')
+
+const b = blockieDataUri('0xBD19a3F0A9CaCE18513A1e2863d648D13975CB30')
+assert.ok(b.startsWith('data:image/svg+xml,'), 'blockie is an svg data uri')
+assert.equal(b, blockieDataUri('0xbd19a3f0a9cace18513a1e2863d648d13975cb30'), 'deterministic, case-insensitive')
+assert.notEqual(b, blockieDataUri('0x0000000000000000000000000000000000000001'), 'differs per address')
 
 console.log('test-socials: all assertions passed')

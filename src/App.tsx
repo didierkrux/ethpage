@@ -8,6 +8,32 @@ import { Recommendations } from './components/Recommendations'
 import { QrBadge } from './components/QrBadge'
 import type { Loadable } from './types'
 
+// The page's signature: the profile's own header art, blurred into a
+// full-viewport ambience behind the glass card — every name gets an
+// atmosphere derived from its on-chain identity. Falls back to a soft
+// accent-tinted wash when the name has no header record.
+function Backdrop({ header }: { header: string | null }) {
+  const [loaded, setLoaded] = useState(false)
+  return (
+    <div aria-hidden className="fixed inset-0 -z-10 overflow-hidden">
+      {header ? (
+        <img
+          src={header}
+          alt=""
+          onLoad={() => setLoaded(true)}
+          className={`h-full w-full scale-125 object-cover blur-3xl saturate-[1.2] transition-opacity duration-700 motion-reduce:transition-none ${loaded ? 'opacity-100' : 'opacity-0'}`}
+        />
+      ) : (
+        <div
+          className="absolute inset-0"
+          style={{ background: 'radial-gradient(80% 60% at 50% 0%, color-mix(in srgb, var(--accent) 16%, transparent), transparent)' }}
+        />
+      )}
+      <div className="absolute inset-0 bg-neutral-100/75 dark:bg-neutral-950/70" />
+    </div>
+  )
+}
+
 export default function App() {
   const [profile, setProfile] = useState<Loadable<EnsProfile>>({ status: 'loading' })
 
@@ -32,15 +58,16 @@ export default function App() {
   }, [loadProfile])
 
   return (
-    <main className="min-h-screen bg-neutral-100 px-4 py-4 font-sans text-neutral-900 sm:py-6">
-      <div className="mx-auto w-full max-w-2xl rounded-2xl bg-white p-5 shadow-sm sm:p-8">
+    <main className="min-h-screen px-4 py-4 font-sans sm:py-6">
+      <Backdrop header={profile.status === 'ready' ? profile.data.header : null} />
+      <div className="mx-auto w-full max-w-2xl rounded-2xl bg-white/80 p-5 shadow-xl shadow-neutral-900/5 ring-1 ring-white/60 backdrop-blur-xl dark:bg-neutral-900/75 dark:shadow-black/20 dark:ring-white/10 sm:p-8">
         {profile.status === 'loading' && <ProfileSkeleton />}
         {profile.status === 'error' && (
           <div className="py-12 text-center">
-            <p className="text-neutral-600">Could not load the {ENS_NAME} profile.</p>
+            <p className="text-neutral-600 dark:text-neutral-300">Could not load the {ENS_NAME} profile.</p>
             <button
               onClick={loadProfile}
-              className="mt-4 rounded-full bg-neutral-900 px-6 py-2 font-medium text-white transition hover:bg-neutral-700"
+              className="mt-4 rounded-full bg-neutral-900 px-6 py-2 font-medium text-white transition hover:bg-neutral-700 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
             >
               Retry
             </button>
@@ -52,13 +79,13 @@ export default function App() {
 
         {CONFIG.recommendations?.schemaUid && <Recommendations />}
       </div>
-      <p className="mx-auto mt-3 max-w-2xl text-center text-xs text-neutral-400">
+      <p className="mx-auto mt-3 max-w-2xl text-center text-xs text-neutral-400 dark:text-neutral-500">
         Served from IPFS. Profile data lives on ENS (
         <a
           href={`https://app.ens.domains/${ENS_NAME}`}
           target="_blank"
           rel="noopener noreferrer"
-          className="underline hover:text-neutral-600"
+          className="underline hover:text-neutral-600 dark:hover:text-neutral-300"
         >
           {ENS_NAME}
         </a>
@@ -73,7 +100,7 @@ export default function App() {
             href={CONFIG.repo}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-accent shadow-sm transition hover:border-accent"
+            className="inline-flex items-center gap-1.5 rounded-full border border-neutral-200/70 bg-white/70 px-4 py-2 text-sm font-medium text-accent shadow-sm backdrop-blur transition hover:border-accent dark:border-white/10 dark:bg-white/5"
           >
             <GitFork className="h-4 w-4" />
             Create your own ENS page

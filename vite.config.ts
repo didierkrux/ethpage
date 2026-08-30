@@ -105,6 +105,7 @@ function buildStamp(): Plugin {
 // gateway path (/ipfs/<cid>/) as well as the eth.limo root.
 export default defineConfig({
   base: './',
+  server: { port: 3000 },
   // Surfaced in the footer so deployed pages/forks are identifiable.
   define: { __APP_VERSION__: JSON.stringify(version) },
   plugins: [react(), ensMeta(), buildStamp()],

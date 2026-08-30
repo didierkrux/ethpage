@@ -35,7 +35,7 @@ export function Links({ links }: { links: LinkItem[] }) {
           href={link.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="relative flex min-h-14 items-center rounded-xl border border-neutral-200 bg-white py-2 pl-14 pr-4 text-center font-medium text-accent shadow-sm transition duration-150 ease-out hover:scale-[1.03] hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.97] sm:px-14"
+          className="relative flex min-h-14 items-center rounded-xl border border-neutral-200/70 bg-white/70 py-2 pl-14 pr-4 text-center font-medium text-accent shadow-sm backdrop-blur-sm transition duration-150 ease-out hover:scale-[1.03] hover:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent active:scale-[0.97] motion-reduce:transform-none dark:border-white/10 dark:bg-white/5 sm:px-14"
         >
           <LinkIcon link={link} />
           <span className="w-full">{link.title}</span>

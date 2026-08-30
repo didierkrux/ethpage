@@ -66,7 +66,7 @@ export function EasSetup() {
                 setStatus({
                   kind: 'error',
                   message:
-                    'Transaction sent, but the indexer has not caught up after a minute — reload this page shortly to confirm before retrying.',
+                    'Transaction sent, but the indexer has not caught up after a minute. Reload this page shortly to confirm before retrying.',
                 })
             })
             .catch(() => {
@@ -76,7 +76,7 @@ export function EasSetup() {
                 setStatus({
                   kind: 'error',
                   message:
-                    'Transaction sent, but the indexer has not caught up after a minute — reload this page shortly to confirm before retrying.',
+                    'Transaction sent, but the indexer has not caught up after a minute. Reload this page shortly to confirm before retrying.',
                 })
             })
         }
@@ -94,10 +94,10 @@ export function EasSetup() {
   }
 
   return (
-    <main className="min-h-screen bg-neutral-100 px-4 py-8 font-sans text-neutral-900">
-      <div className="mx-auto w-full max-w-xl rounded-2xl bg-white p-6 shadow-sm sm:p-8">
+    <main className="min-h-screen px-4 py-8 font-sans">
+      <div className="mx-auto w-full max-w-xl rounded-2xl bg-white p-6 shadow-sm dark:bg-neutral-900 dark:ring-1 dark:ring-white/10 sm:p-8">
         <h1 className="font-display text-xl font-bold">Onchain recommendations schema setup</h1>
-        <p className="mt-2 text-sm text-neutral-600">
+        <p className="mt-2 text-sm text-neutral-600 dark:text-neutral-300">
           One-time step to enable the Onchain recommendations section: the{' '}
           <a href="https://attest.org" target="_blank" rel="noopener noreferrer" className="text-accent underline">
             EAS
@@ -111,7 +111,7 @@ export function EasSetup() {
           <select
             value={chainName}
             onChange={e => setChainName(e.target.value)}
-            className="mt-1 block w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent"
+            className="mt-1 block w-full rounded-lg border border-neutral-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent dark:border-white/10 dark:bg-neutral-950"
           >
             {EAS_CHAIN_NAMES.map(n => (
               <option key={n} value={n}>
@@ -121,17 +121,17 @@ export function EasSetup() {
           </select>
         </label>
 
-        <div className="mt-4 rounded-lg bg-neutral-50 p-3 font-mono text-xs">
+        <div className="mt-4 rounded-lg bg-neutral-50 p-3 font-mono text-xs dark:bg-white/5">
           <div className="text-neutral-500">schema (revocable, no resolver)</div>
           <div className="mt-1 break-all">{RECOMMENDATION_SCHEMA}</div>
-          <div className="mt-2 text-neutral-500">deterministic UID</div>
+          <div className="mt-2 text-neutral-500 dark:text-neutral-400">deterministic UID</div>
           <div className="mt-1 break-all">{uid}</div>
         </div>
 
         <div className="mt-4 text-sm">
-          {status.kind === 'checking' && <p className="text-neutral-500">Checking {chain.name}…</p>}
+          {status.kind === 'checking' && <p className="text-neutral-500 dark:text-neutral-400">Checking {chain.name}…</p>}
           {status.kind === 'error' && (
-            <p className="text-red-600">
+            <p className="text-red-600 dark:text-red-400">
               {status.message}{' '}
               <button onClick={check} className="underline">
                 retry
@@ -139,8 +139,8 @@ export function EasSetup() {
             </p>
           )}
           {status.kind === 'registered' && (
-            <p className="font-medium text-green-700">
-              ✓ Registered on {chain.name} —{' '}
+            <p className="font-medium text-green-700 dark:text-green-400">
+              ✓ Registered on {chain.name} ·{' '}
               <a
                 href={`${easscan}/schema/view/${uid}`}
                 target="_blank"
@@ -153,17 +153,17 @@ export function EasSetup() {
           )}
           {status.kind === 'unregistered' && (
             <div>
-              <p className="text-neutral-600">Not registered on {chain.name} yet.</p>
+              <p className="text-neutral-600 dark:text-neutral-300">Not registered on {chain.name} yet.</p>
               <button
                 onClick={register}
                 disabled={sending}
-                className="mt-2 rounded-full bg-neutral-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50"
+                className="mt-2 rounded-full bg-neutral-900 px-5 py-2 text-sm font-medium text-white transition hover:bg-neutral-700 disabled:opacity-50 dark:bg-white dark:text-neutral-900 dark:hover:bg-neutral-200"
               >
                 {sending ? 'Confirm in wallet…' : `Register on ${chain.name} (gas ≈ cents)`}
               </button>
               {tx && (
-                <p className="mt-2 text-neutral-500">
-                  Transaction sent — waiting for the indexer…{' '}
+                <p className="mt-2 text-neutral-500 dark:text-neutral-400">
+                  Transaction sent, waiting for the indexer…{' '}
                   <a
                     href={`${chain.blockExplorers?.default.url}/tx/${tx}`}
                     target="_blank"
@@ -179,19 +179,21 @@ export function EasSetup() {
         </div>
 
         <div className="mt-6">
-          <div className="text-sm font-medium">Then add to src/config.json (or config.custom.json):</div>
+          <div className="text-sm font-medium">
+            Then add to src/config.json (or a gitignored config.yourname.json):
+          </div>
           <div className="mt-1 flex items-start gap-2">
-            <code className="block flex-1 overflow-x-auto rounded-lg bg-neutral-900 p-3 text-xs text-neutral-100">
+            <code className="block flex-1 overflow-x-auto rounded-lg bg-neutral-900 p-3 text-xs text-neutral-100 dark:bg-neutral-950 dark:ring-1 dark:ring-white/10">
               {snippet}
             </code>
             <button
               onClick={copy}
-              className="rounded-lg border border-neutral-200 px-3 py-2 text-xs text-neutral-600 hover:border-accent"
+              className="rounded-lg border border-neutral-200 px-3 py-2 text-xs text-neutral-600 hover:border-accent dark:border-white/10 dark:text-neutral-300"
             >
               {copied ? 'Copied!' : 'Copy'}
             </button>
           </div>
-          <p className="mt-2 text-xs text-neutral-400">…then rebuild and re-pin. This page ships with every fork.</p>
+          <p className="mt-2 text-xs text-neutral-400 dark:text-neutral-500">…then rebuild and re-pin. This page ships with every fork.</p>
         </div>
       </div>
     </main>

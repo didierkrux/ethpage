@@ -12,7 +12,7 @@ import {
 import { arbitrum, base, mainnet, optimism, sepolia } from 'viem/chains'
 import { EFP_API } from './efp'
 import { lookupEnsName } from './ens'
-import { activeProvider, connectWallet } from './wallets'
+import { activeProvider, connectWallet, isWalletConnect } from './wallets'
 
 // Recommendations are EAS attestations (attest.org): schema
 // `string relationship,string recommendation`, recipient = the page's name,
@@ -283,6 +283,32 @@ async function connectedWalletClient(chain: Chain) {
   const provider = activeProvider()
   if (!provider) throw new Error('No wallet detected.')
   const wallet = createWalletClient({ chain, transport: custom(provider) })
+  if (isWalletConnect(provider)) {
+    // A WalletConnect session can only sign on chains it approved at connect
+    // time, and setDefaultChain silently no-ops for unapproved ones — so
+    // check the session's approvals first and fail with instructions rather
+    // than letting viem's chain guard (or a wrong-chain tx) surface later.
+    const wc = provider as unknown as {
+      session?: { namespaces?: { eip155?: { chains?: string[]; accounts?: string[] } } }
+      setDefaultChain?: (chainId: string) => void
+    }
+    const ns = wc.session?.namespaces?.eip155
+    const approved = new Set([
+      ...(ns?.chains ?? []),
+      ...(ns?.accounts ?? []).map(a => a.split(':').slice(0, 2).join(':')),
+    ])
+    if (!approved.has(`eip155:${chain.id}`)) {
+      throw new Error(
+        `This WalletConnect session has no ${chain.name} approval. Disconnect, reconnect, and approve ${chain.name} in your wallet.`
+      )
+    }
+    wc.setDefaultChain?.(`eip155:${chain.id}`)
+    // Approved chains switch locally inside the provider (no phone prompt);
+    // this also satisfies viem's chain check on the transaction.
+    const current = (await provider.request({ method: 'eth_chainId' })) as string
+    if (Number(current) !== chain.id) await wallet.switchChain({ id: chain.id })
+    return { wallet, account }
+  }
   try {
     await wallet.switchChain({ id: chain.id })
   } catch (e) {

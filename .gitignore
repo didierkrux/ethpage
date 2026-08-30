@@ -5,9 +5,11 @@ dist
 !.env.example
 .DS_Store
 
-# Personal deployment config (src/config.json stays the generic template).
-# Remove this line if you prefer to commit yours.
-src/config.custom.json
+# Personal deployment configs, e.g. src/config.yourname.json
+# (src/config.json stays the generic template). Remove these lines if you
+# prefer to commit yours.
+src/config.*.json
+!src/config.json
 
 # Local working docs (spec + implementation plan)
 docs/superpowers/

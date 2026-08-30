@@ -14,22 +14,27 @@ export interface SiteConfig {
   efp?: boolean
   og?: { title?: string; description?: string }
   rpcUrls?: string[]
+  // Enables the WalletConnect option in the wallet picker (mobile signing).
+  // Free project id from cloud.reown.com; absent = injected wallets only.
+  walletConnectProjectId?: string
   links: LinkItem[]
   // EAS-backed recommendations section; absent = hidden. See README.
   recommendations?: { chain?: string; schemaUid: string }
 }
 
-// config.json is the committed generic template; an optional gitignored
-// config.custom.json (same schema) holds the owner's real config and wins
-// key-by-key, so the repo and every fork stay a pristine template.
-// import.meta.glob tolerates the file being absent (empty result). This
-// module is Vite-only — node scripts fs-read and merge the two files
-// themselves instead of importing it.
-const customModules = import.meta.glob('./config.custom.json', { eager: true }) as Record<
+// config.json is the committed generic template; any gitignored
+// config.<name>.json (same schema, e.g. config.yourname.json) holds the
+// owner's real config and wins key-by-key, so the repo and every fork stay
+// a pristine template. import.meta.glob tolerates no file being present
+// (empty result); multiple overrides merge in filename order. This module
+// is Vite-only — node scripts fs-read and merge the files themselves.
+const customModules = import.meta.glob('./config.*.json', { eager: true }) as Record<
   string,
   { default: Partial<SiteConfig> }
 >
-const custom = customModules['./config.custom.json']?.default ?? {}
+const custom = Object.keys(customModules)
+  .sort()
+  .reduce<Partial<SiteConfig>>((acc, key) => ({ ...acc, ...customModules[key].default }), {})
 
 export const CONFIG: SiteConfig = { ...(base as SiteConfig), ...custom }
 

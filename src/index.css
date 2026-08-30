@@ -7,3 +7,17 @@
      main.tsx overrides this variable at startup when it is set. */
   --accent: #171717;
 }
+
+/* Page ground for both entries; the ambient backdrop layers on top of it.
+   Dark mode is automatic via prefers-color-scheme — no toggle, no JS. */
+body {
+  @apply bg-neutral-100 text-neutral-900 dark:bg-neutral-950 dark:text-neutral-100;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* The neutral accent fallback flips with the scheme; a configured
+       accent (set inline by mount.tsx) wins over both. */
+    --accent: #e5e5e5;
+  }
+}
