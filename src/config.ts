@@ -1,5 +1,3 @@
-import base from './config.json'
-
 export interface LinkItem {
   title: string
   url: string
@@ -23,30 +21,25 @@ export interface SiteConfig {
   // Enables the WalletConnect option in the wallet picker (mobile signing).
   // Free project id from cloud.reown.com; absent = injected wallets only.
   walletConnectProjectId?: string
+  // Public URL of this deployment when it is hosted on a regular web domain
+  // instead of IPFS + eth.limo (e.g. https://example.com/page). Absent = the
+  // name's eth.limo URL. Drives the asset base path, og:url, the QR badge and
+  // the footer; see README "Host it on your own domain".
+  siteUrl?: string
   links: LinkItem[]
   // EAS-backed recommendations section; absent = hidden. See README.
   recommendations?: { chain?: string; schemaUid: string }
 }
 
-// config.json is the committed generic template; any gitignored
-// config.<name>.json (same schema, e.g. config.yourname.json) holds the
-// owner's real config and wins key-by-key, so the repo and every fork stay
-// a pristine template. import.meta.glob tolerates no file being present
-// (empty result); multiple overrides merge in filename order. This module
-// is Vite-only — node scripts fs-read and merge the files themselves.
-const customModules = import.meta.glob('./config.*.json', { eager: true }) as Record<
-  string,
-  { default: Partial<SiteConfig> }
->
-// CONFIG=<name> at build time selects one override (vite.config bakes it in
-// as __CONFIG_NAME__ and its loader errors when several overrides exist with
-// no selection, so the merge-all branch only ever sees zero or one file).
-const keys = Object.keys(customModules)
-  .sort()
-  .filter(key => !__CONFIG_NAME__ || key === `./config.${__CONFIG_NAME__}.json`)
-const custom = keys.reduce<Partial<SiteConfig>>((acc, key) => ({ ...acc, ...customModules[key].default }), {})
+// The config is chosen at build time: scripts/load-config.ts merges the
+// committed generic template (config.json) with the one gitignored
+// config.<name>.json override selected by CONFIG=<name>, and vite.config.ts
+// bakes the result in as __SITE_CONFIG__. Nothing else is bundled, so a
+// checkout holding several deployment configs ships only the selected one.
+export const CONFIG: SiteConfig = __SITE_CONFIG__
 
-export const CONFIG: SiteConfig = { ...(base as SiteConfig), ...custom }
+// Where this deployment lives: the configured web2 URL, or the name's eth.limo.
+export const SITE_URL = CONFIG.siteUrl ?? `https://${CONFIG.ensName}.limo/`
 
 // ?name=x.eth overrides the configured name so any name can be previewed
 // against the same bundle.

@@ -1,7 +1,6 @@
-// Node-side config loader shared by the scripts and vite.config.ts — the
-// same merge src/config.ts does with import.meta.glob (which is Vite-only):
-// the committed generic template overridden key-by-key by any gitignored
-// config.<name>.json personal config, in filename order.
+// The one config merge, shared by the scripts and vite.config.ts (which
+// bakes the result into the client bundle as __SITE_CONFIG__): the committed
+// generic template overridden key-by-key by one gitignored config.<name>.json.
 import { readdirSync, readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -14,6 +13,10 @@ export interface FileConfig {
   og?: { title?: string; description?: string }
   rpcUrls?: string[]
   recommendations?: { chain?: string; schemaUid: string }
+  viewer?: boolean
+  viewerUrl?: string
+  walletConnectProjectId?: string
+  siteUrl?: string
   links?: { title: string; url: string; emoji?: string; image?: string }[]
 }
 

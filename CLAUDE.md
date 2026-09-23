@@ -19,9 +19,14 @@ deploys the owner's name via a gitignored `src/config.<name>.json` override.
   overridden by a `src/config.<name>.json` (gitignored deployment config).
   With several overrides, `CONFIG=<name>` selects one (dev, build, deploy,
   tests); the build errors rather than guessing. Editing configs requires
-  rebuild + re-pin. `src/config.ts` resolves this via `import.meta.glob` +
-  the baked `__CONFIG_NAME__` and is **Vite-only** — node-side consumers
-  (`vite.config.ts`, `scripts/*.ts`) go through `scripts/load-config.ts`.
+  rebuild + re-pin. The merge lives in `scripts/load-config.ts`
+  (used by `vite.config.ts` and `scripts/*.ts`); `vite.config.ts` bakes the
+  selected result into the bundle as `__SITE_CONFIG__`, which `src/config.ts`
+  exports as `CONFIG`, so only one deployment's config ever ships.
+- `siteUrl` in a config hosts a build on a regular web URL instead of
+  eth.limo: `vite.config.ts` derives the absolute asset base from its path
+  and `og:url` from it, `SITE_URL` in `src/config.ts` feeds the QR badge and
+  the footer. Deploying is copying `dist/` to that path; no pin, no contenthash.
 - Everything else (avatar, header, bio, url, socials) resolves live from ENS
   records in the browser: `src/lib/ens.ts`, keyless public RPCs with viem
   `fallback` + multicall batching, `rpcUrls` passed in by callers. No API

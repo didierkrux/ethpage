@@ -93,7 +93,7 @@ export default function App() {
         {!isLanding && CONFIG.recommendations?.schemaUid && <Recommendations />}
       </div>
       <p className="mx-auto mt-3 max-w-2xl text-center text-xs text-neutral-400 dark:text-neutral-400">
-        Served from IPFS <span className="mx-1 text-neutral-300 dark:text-neutral-600">·</span> profile data lives on{' '}
+        {CONFIG.siteUrl ? `Hosted at ${new URL(CONFIG.siteUrl).host}` : 'Served from IPFS'} <span className="mx-1 text-neutral-300 dark:text-neutral-600">·</span> profile data lives on{' '}
         <a
           href={`https://app.ens.domains/${ENS_NAME}`}
           target="_blank"

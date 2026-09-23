@@ -104,6 +104,28 @@ browser wallet, or any mobile wallet via WalletConnect when
 `walletConnectProjectId` is set (the WalletConnect code loads lazily, only
 when picked).
 
+## Host it on your own domain (optional)
+
+The default home is IPFS behind `yourname.eth.limo`, but the build is plain
+static files and can live on any web server too, for example at
+`https://example.com/page`. Add the public URL to your config:
+
+```json
+"siteUrl": "https://example.com/page"
+```
+
+Then build and copy `dist/` to that path on your host:
+
+```bash
+CONFIG=yourname pnpm build
+```
+
+With `siteUrl` set, asset paths become absolute under its path (so both
+`/page` and `/page/` work), and `og:url`, the QR badge and the footer point at
+it. `?name=` previews work there like anywhere else. `dist/eas-setup.html` is
+the one-time schema tool and can be left out of the copy. No ENS Content Hash
+is involved; the page is updated by copying a new build.
+
 ## Scripts
 
 | Command | What it does |

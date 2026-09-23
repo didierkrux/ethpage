@@ -15,6 +15,13 @@ const config = loadConfig()
 if (!config.ensName) throw new Error('ensName missing from src/config.json / src/config.custom.json')
 
 const ENS_NAME = config.ensName
+// Where the build will be served. IPFS builds keep relative asset paths so
+// they work from any gateway path; a page hosted under a path on a web2
+// domain (siteUrl https://host/page) needs absolute ones, since /page without
+// a trailing slash would resolve ./assets to /assets.
+const SITE_URL = config.siteUrl ?? `https://${ENS_NAME}.limo/`
+const sitePath = config.siteUrl ? new URL(config.siteUrl).pathname.replace(/\/?$/, '/') : '/'
+const BASE = sitePath === '/' ? './' : sitePath
 // ENS metadata service serves the name's avatar image: share previews and the
 // static favicon work with zero hosted assets.
 const AVATAR_URL = `https://metadata.ens.domains/mainnet/avatar/${ENS_NAME}`
@@ -74,7 +81,7 @@ function ensMeta(): Plugin {
         `<meta property="og:type" content="website" />`,
         `<meta property="og:title" content="${ogTitle}" />`,
         `<meta property="og:description" content="${ogDescription}" />`,
-        `<meta property="og:url" content="https://${ENS_NAME}.limo/" />`,
+        `<meta property="og:url" content="${escapeAttr(SITE_URL)}" />`,
         `<meta property="og:image" content="${AVATAR_URL}" />`,
         `<meta name="twitter:card" content="summary" />`,
         `<meta name="twitter:title" content="${ogTitle}" />`,
@@ -102,14 +109,16 @@ function buildStamp(): Plugin {
 }
 
 // base './' makes all asset paths relative so the bundle works from any IPFS
-// gateway path (/ipfs/<cid>/) as well as the eth.limo root.
+// gateway path (/ipfs/<cid>/) as well as the eth.limo root; a siteUrl with a
+// path switches to that absolute path (see BASE above).
 export default defineConfig({
-  base: './',
+  base: BASE,
   server: { port: 3000 },
-  // Surfaced in the footer so deployed pages/forks are identifiable.
-  // __CONFIG_NAME__ carries the CONFIG=<name> selection into src/config.ts
-  // so the client bundle uses the same override the build was told to use.
-  define: { __APP_VERSION__: JSON.stringify(version), __CONFIG_NAME__: JSON.stringify(process.env.CONFIG ?? '') },
+  // __APP_VERSION__ is surfaced in the footer so deployed pages/forks are
+  // identifiable. __SITE_CONFIG__ is the merged config loadConfig() selected
+  // (template + the one CONFIG=<name> override), baked as a literal so the
+  // bundle contains exactly one deployment's config and no other override.
+  define: { __APP_VERSION__: JSON.stringify(version), __SITE_CONFIG__: JSON.stringify(config) },
   plugins: [react(), ensMeta(), buildStamp()],
   build: {
     rollupOptions: {

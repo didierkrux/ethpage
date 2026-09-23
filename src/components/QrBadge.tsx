@@ -1,14 +1,16 @@
 import { useMemo } from 'react'
 import qrcode from 'qrcode-generator'
-import { ENS_NAME } from '../config'
+import { ENS_NAME, IS_PREVIEW, SITE_URL } from '../config'
 
-// Desktop-only corner badge: scanning it opens the canonical eth.limo URL on
-// a phone, no matter which gateway or preview the desktop visitor is on.
+// Desktop-only corner badge: scanning it opens this deployment's canonical
+// URL (eth.limo, or siteUrl when hosted on a web2 domain) on a phone, no matter
+// which gateway the desktop visitor is on; a ?name= preview opens the same
+// preview there.
 // Generated locally (zero-dependency) so the IPFS bundle stays self-contained.
 export function QrBadge() {
   const svg = useMemo(() => {
     const qr = qrcode(0, 'M')
-    qr.addData(`https://${ENS_NAME}.limo/`)
+    qr.addData(IS_PREVIEW ? `${SITE_URL}${SITE_URL.includes('?') ? '&' : '?'}name=${ENS_NAME}` : SITE_URL)
     qr.make()
     return qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true })
   }, [])
